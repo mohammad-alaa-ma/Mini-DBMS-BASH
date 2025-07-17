@@ -10,7 +10,8 @@ do
     echo 'c) connect to a database'
     echo 'd) drop a database'
     echo 'e) exit'
-    read -p '>> ' action
+    read -n1 -p '>> ' action
+    echo
     case $action in
             a)
                 ./creatDB
