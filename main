@@ -21,7 +21,8 @@ do
             echo `./connectToDb`
             ;;
         DropDb)
-            echo work in progress
+            read -p "enter the name of database to delete: " dbname
+            ./dropDB $dbname
             ;;            
         Exit)
             echo bye!

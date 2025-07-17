@@ -1,0 +1,19 @@
+#! /usr/bin/bash
+
+if [ $# -lt 1 ]
+then
+    echo "invalid input"
+    exit 1
+fi
+
+if [ ! -d ./mydb/$1 ]
+then
+    echo "doesn't exist"
+    exit 1
+fi
+
+rm -rf ./mydb/$1
+
+echo database $1 removed successfuly
+
+exit 0
