@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+echo "Delete Table will be here"
+sleep 2
+

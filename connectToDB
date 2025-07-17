@@ -1,0 +1,41 @@
+#!/usr/bin/bash
+
+while true 
+do
+    clear
+    echo " Here is the list of all databases "
+    echo "=================================== "
+    ./listAllDB
+    echo "=================================== "
+
+    read -r -p "Enter database name to connect (or type 'exit' to go back): " dbName
+   
+    # If input is empty (user just pressed Enter)
+    if [[ -z "$dbName" ]]; then
+        echo "You must enter a database name!"
+        read -r -p "Press any key to try again..." -n1 -s
+        continue
+    fi
+
+    # Convert input to lowercase for case-insensitive comparison
+    # dbName=$(echo "$dbName" | xargs)
+    dbNameLower=$(echo "$dbName" | tr '[:upper:]' '[:lower:]')
+
+    if [[ "$dbNameLower" == "exit" ]]; then
+        echo "Returning to main menu..."
+        break
+    elif [[ -d "mydb/$dbName" ]]; then
+        
+	echo "Connecting to database '$dbName'"
+        sleep 1
+	./tableMenu "$dbName"
+
+        echo
+        echo "Returning to Database Menu... "
+	sleep 1
+    else
+        echo "Database '$dbName' does not exist!"
+        read -r -p "Press any key to try again..." -n1 -s
+    fi
+done
+
