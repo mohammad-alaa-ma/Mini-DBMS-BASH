@@ -1,0 +1,33 @@
+#! /usr/bin/bash
+
+echo 'Welcome to my_db project'
+
+select action in CreatDb ListAllDb ConnectDb DropDb Exit
+do
+    case $action in
+        CreatDb)
+            ./creatDB
+            if [[ $? -eq 0 ]]
+            then
+                echo your database created successfuly press 2 to connect to it or 1 to creat another or 3 to exit
+            else
+                echo failed to creat your Database press 1 to try again, 2 to connect to an existing one or 3 to exit
+            fi
+            ;;        
+        ListAllDb)
+            ./ListAllDb
+            ;;       
+        ConnectDb)
+            echo `./connectToDb`
+            ;;
+        DropDb)
+            echo work in progress
+            ;;            
+        Exit)
+            echo bye!
+            exit
+            ;;
+        *)
+            echo invalid input
+    esac
+done
