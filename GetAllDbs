@@ -2,9 +2,9 @@
 
 dirs=`ls ./mydb 2> /dev/null`
 
-if [[ ! $? -eq 0 || -z $dirs ]]
+if [[ $? -ne 0 || -z $dirs ]]
 then
-    echo no databases found
     exit 1
 fi
+
 echo $dirs

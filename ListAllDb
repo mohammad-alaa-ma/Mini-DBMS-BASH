@@ -4,7 +4,7 @@ mydbs=$(./GetAllDbs)
 if [[ $? -eq 1 ]]
 then 
     echo there is no databases found
-    exit
+    exit 0
 fi
 
 for db in $mydbs
