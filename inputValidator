@@ -4,6 +4,12 @@
 # 2 -> characters only
 # 3 -> mix of digits & characters
 
+if [[ $# -ne 2 ]]
+then
+    echo "invalid input"
+    exit 1
+fi
+
 case $1 in
     DIGITS_ONLY)
         if [[ $2 =~ ^[0-9]+$ ]]
@@ -15,7 +21,7 @@ case $1 in
     CHARS_ONLY)
         if [[ $2 =~ ^[A-Za-z]+$ ]]
         then
-            echo 2
+            echo $2
         fi
         ;;
     CAPS_ONLY)

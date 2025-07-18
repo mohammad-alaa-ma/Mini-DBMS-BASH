@@ -10,7 +10,7 @@ do
         exit 1
     fi
 
-    resultOfInputValidation=$(./inputValidator CHARS_ONLY $name)
+    resultOfInputValidation=$(./inputValidator ./ $name)
     
     if [[ $resultOfInputValidation != "2" ]]
     then
