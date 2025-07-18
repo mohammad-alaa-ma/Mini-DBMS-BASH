@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#!/usr/bin/bash
 
 if [ $# -lt 1 ]
 then
@@ -17,3 +17,4 @@ rm -rf ./mydb/$1
 echo database $1 removed successfuly
 
 exit 0
+

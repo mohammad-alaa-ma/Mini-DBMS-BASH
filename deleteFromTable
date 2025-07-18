@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+echo "Delete from table will be here"
+sleep 1

@@ -1,8 +1,9 @@
 #! /usr/bin/bash
 
 while true
+
 do
-    read -p "enter your Database name>> or 0 to go back " name
+    read -p "Enter your Database name or type "0" to go back: " name
 
     if [[ $name == "0" ]]
     then
@@ -11,9 +12,9 @@ do
 
     resultOfInputValidation=$(./inputValidator CHARS_ONLY $name)
     
-    if [[ $resultOfInputValidation == "1" ]]
+    if [[ $resultOfInputValidation != "2" ]]
     then
-        echo "only enter letters for the Database name *any compination of letters from A to Z or a to z*"
+        echo " Database name should be any combination of letters from A to Z or a to z"
         continue
     fi
 

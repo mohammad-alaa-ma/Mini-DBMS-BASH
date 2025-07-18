@@ -1,0 +1,44 @@
+#!/usr/bin/bash
+
+dbName=$1
+
+while true
+do
+
+    read -p "Enter file name to create (or type '0' to go back): " fileName
+
+     if [[ $fileName == "0" ]]
+    then
+        exit 1
+    fi
+
+
+      # If input is empty (user just pressed Enter)
+    if [[ -z "$fileName" ]]; then
+        echo "You must enter a file name!"
+        read -r -p "Press any key to try again..." -n1 -s
+        continue
+    fi
+
+     resultOfInputValidation=$(./inputValidator CHARS_ONLY $fileName)
+
+    if [[ $resultOfInputValidation != "2" ]]
+    then
+        echo " File name should be any combination of letters from A to Z or a to z"
+        continue
+    fi
+
+
+    if [[ -f ./mydb/$dbName/$fileName ]]
+    then
+        echo "File having the same name already exits. Choose another one! "
+        read -r -p "Press any key to try again..." -n1 -s
+        continue
+
+    fi
+    break
+done
+
+touch mydb/$dbName/$fileName  mydb/$dbName/".$fileName.metadata"
+
+exit 0
