@@ -1,3 +1,20 @@
 #!/usr/bin/bash
-echo "Show Tables will be here"
-sleep 2
+
+dbName=$1
+
+dir=./mydb/$dbName
+
+if [[ ! -d "$dir" ]]; then
+    echo "Database '$dbName' does not exist!"
+    exit 1
+fi
+
+echo "Showing tables in database '$dbName'..."
+echo "==================================="
+tables=$(ls "$dir")
+for table in $tables; do
+    echo "- $table"
+done
+echo "==================================="
+
+read -n1 -rp "Press any key to return to the previous menu..." -s
