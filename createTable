@@ -22,7 +22,7 @@ do
 
      resultOfInputValidation=$(./inputValidator CHARS_ONLY $fileName)
 
-    if [[ $resultOfInputValidation != "2" ]]
+    if [[ $resultOfInputValidation != 0 ]]
     then
         echo " File name should be any combination of letters from A to Z or a to z"
         continue
@@ -31,7 +31,7 @@ do
 
     if [[ -f ./mydb/$dbName/$fileName ]]
     then
-        echo "File having the same name already exits. Choose another one! "
+        echo "Table with the same name already exits. Choose another one! "
         read -r -p "Press any key to try again..." -n1 -s
         continue
 
