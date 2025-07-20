@@ -6,7 +6,7 @@
 
 if [[ $# -ne 2 ]]
 then
-    echo "invalid input"
+    echo 1
     exit 1
 fi
 
@@ -14,34 +14,34 @@ case $1 in
     DIGITS_ONLY)
         if [[ $2 =~ ^[0-9]+$ ]]
         then
-            echo 1 
+            echo 0 
             
         fi
         ;;
     CHARS_ONLY)
         if [[ $2 =~ ^[A-Za-z]+$ ]]
         then
-            echo $2
+            echo 0
         fi
         ;;
     CAPS_ONLY)
         if [[ $2 =~ ^[A-Z]+$ ]]
         then
-            echo 3
+            echo 0
         fi
         ;;
     LOWER_ONLY)
         if [[ $2 =~ ^[a-z]+$ ]]
         then
-            echo 4
+            echo 0
         fi
         ;;
     MIX)
         if [[ $2 =~ ^[0-9A-Za-z]+$ ]]
         then
-            echo 5
+            echo 0
         fi
         ;;
     *)
-        echo 6
+        echo 1
 esac
