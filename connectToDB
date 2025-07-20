@@ -28,7 +28,7 @@ do
         
 	echo "Connecting to database '$dbName'"
         sleep 1
-	./tableMenu "$dbName"
+	./databaseActions "$dbName"
 
         echo
         echo "Returning to Database Menu... "
