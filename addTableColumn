@@ -1,0 +1,77 @@
+#! /usr/bin/bash
+# This script creates a table in the specified database.
+dbName=$1
+tableName=$2
+if [[ -z $dbName || -z $tableName ]]
+then
+    echo "internal error: database name or table name is not provided"
+    exit 1
+fi
+# if [[ $# > 2 ]] --> a case later to be the query
+echo "Creating table '$tableName' in database '$dbName'..."
+pk=0
+while true
+do
+    read -p "Enter column name (or type '0' to finish): " columnName
+    if [[ $columnName == "0" ]]
+    then
+        if [[ $pk -eq 0 ]]
+        then
+            echo "You must define at least one primary key!"
+            read -r -p "Press any key to try again..." -n1 -s
+            continue
+        fi
+        echo "Finished creating table '$tableName'."
+        break
+    fi
+    # If input is empty (user just pressed Enter)
+    if [[ -z "$columnName" ]] 
+    then
+        echo "You must enter a column name!"
+        read -r -p "Press any key to try again..." -n1 -s
+        continue
+    fi
+    resultOfInputValidation=$(./inputValidator CHARS_ONLY $columnName)
+    if [[ $resultOfInputValidation != 0 ]]
+    then
+        echo "Column name should be any combination of letters from A to Z or a to z"
+        read -r -p "Press any key to try again..." -n1 -s
+        continue
+    fi
+    ./checkForRepeatedColumnName "$dbName" "$tableName" "$columnName"
+    if [[ $? -eq 0 ]]
+    then
+        echo "Column '$columnName' already exists in table '$tableName'. Please choose a different name."
+        read -r -p "Press any key to try again..." -n1 -s
+        echo
+        continue
+    fi
+    ps3="Choose the type of column '$columnName': "
+    select columnType in "INT" "BOOLEAN" "STRING"
+    do
+        case "$columnType" in
+            "INT"|"BOOLEAN"|"STRING")
+                if [[ $pk -eq 0 ]]; then
+                    read -rp "Is this column a primary key? (yes/no): " isPrimaryKey
+                    if [[ $isPrimaryKey =~ ^[yY]([eE][sS])?$ ]]; then
+                        if [[ $columnType != "INT" ]]; then
+                            echo "Only INT type can be a primary key. Please choose another type."
+                            break
+                        fi
+                        pk=1
+                        echo "Column '$columnName' is set as primary key."
+                        echo "$columnName:PK" >> "mydb/$dbName/.$tableName.metadata"
+                        break
+                    fi
+                fi
+                echo "Adding column '$columnName' of type '$columnType' to table '$tableName'..."
+                echo "$columnName:$columnType" >> "mydb/$dbName/.$tableName.metadata"
+                break
+                ;;
+            *)
+                echo "Invalid column type. Please choose a valid type."
+                continue
+                ;;
+        esac
+    done
+done

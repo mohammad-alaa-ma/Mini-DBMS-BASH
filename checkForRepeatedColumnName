@@ -1,0 +1,15 @@
+#! /usr/bin/bash
+
+if [[ $# -lt 3 ]]
+then
+    echo "invalid number of arguments"
+    exit 1
+fi
+
+dbName=$1
+tableName=$2
+columnName=$3
+
+dir="./mydb/$dbName/.$tableName.metadata"
+
+exit $(cat $dir | grep -q "^$columnName:*")  # Check if the column name exists in the metadata file
