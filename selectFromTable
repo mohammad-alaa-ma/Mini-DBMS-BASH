@@ -1,3 +1,31 @@
 #!/usr/bin/bash
-echo "Select from table will be here"
-sleep 1
+
+#just print the rows of the table
+
+dbname=$1
+tables=$(ls ./mydb/$dbname)
+PS3="Choose a table to select from: "
+select tableName in $tables
+do
+    case $tableName in
+        $tables)
+            dir="./mydb/$dbname/$tableName"
+            #first print the column names
+            cat ./mydb/$dbname/.$tableName.metadata | awk -F: ' {printf $1 "\t" }'
+            echo
+            #then print the rows
+            cat ./mydb/$dbname/$tableName | awk -F: ' {
+                for (i=1; i<=NF; i++) {
+                    printf $i "\t"
+                }
+                printf "\n"
+            }'
+            break
+            ;;
+        *)
+            echo "Invalid table selected!"
+    esac
+done
+
+echo "===================================="
+read -n1 -rp "Press any key to return to the previous menu..." -s
