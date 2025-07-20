@@ -12,7 +12,7 @@ do
 
     resultOfInputValidation=$(./inputValidator CHARS_ONLY $name)
     
-    if [[ $resultOfInputValidation != "2" ]]
+    if [[ $resultOfInputValidation != 0 ]]
     then
         echo " Database name should be any combination of letters from A to Z or a to z"
         continue
