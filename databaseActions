@@ -1,0 +1,51 @@
+#!/usr/bin/bash
+
+dbName=$1
+
+while true
+do
+    clear
+    echo "Connected to Database '$dbName'."
+    echo "Available actions:"
+    echo "1. Create Table"
+    echo "2. Delete Table"
+    echo "3. Show Tables"
+    echo "4. Select From Table"
+    echo "5. Delete From Table"
+    echo "6. Insert To Table"
+    echo "7. Update In Table"
+    echo "8. Return To Main Menu"
+    
+    read -p "Choose an action (1-8): " action
+
+    case $action in
+        1) 
+            ./createTable $dbName ;;
+
+        2)
+            ./deleteTable $dbName ;;
+
+        3)
+            ./showTables $dbName ;;
+
+        4)
+            ./selectFromTable $dbName ;;
+
+        5) 
+            ./deleteFromTable $dbName ;;
+
+        6) 
+            ./insertToTable $dbName ;;
+
+        7)
+            ./updateInTable "$dbName" ;;
+
+        8) 
+            echo "Disconnecting from Database $dbName... "
+            break ;;
+	    *) 
+            echo "Invalid choice! Please enter a number from 1 to 8."
+            read -n1 -rp "Press any key to try again..." -s
+            ;;
+        esac
+done
