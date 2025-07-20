@@ -5,31 +5,31 @@ dbName=$1
 while true
 do
 
-    read -p "Enter file name to create (or type '0' to go back): " fileName
+    read -p "Enter table name to create (or type '0' to go back): " tableName
 
-     if [[ $fileName == "0" ]]
+     if [[ $tableName == "0" ]]
     then
         exit 1
     fi
 
 
       # If input is empty (user just pressed Enter)
-    if [[ -z "$fileName" ]]; then
-        echo "You must enter a file name!"
+    if [[ -z "$tableName" ]]; then
+        echo "You must enter a table name!"
         read -r -p "Press any key to try again..." -n1 -s
         continue
     fi
 
-     resultOfInputValidation=$(./inputValidator CHARS_ONLY $fileName)
+     resultOfInputValidation=$(./inputValidator CHARS_ONLY $tableName)
 
     if [[ $resultOfInputValidation != 0 ]]
     then
-        echo " File name should be any combination of letters from A to Z or a to z"
+        echo " Table name should be any combination of letters from A to Z or a to z"
         continue
     fi
 
 
-    if [[ -f ./mydb/$dbName/$fileName ]]
+    if [[ -f ./mydb/$dbName/$tableName ]]
     then
         echo "Table with the same name already exits. Choose another one! "
         read -r -p "Press any key to try again..." -n1 -s
