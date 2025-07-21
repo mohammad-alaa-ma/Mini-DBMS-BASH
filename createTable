@@ -1,44 +1,107 @@
 #!/usr/bin/bash
 
+###### Checking for file's format and not created before
 dbName=$1
 
-while true
-do
+while true; do
+	clear
+	read -p "Enter file name to create (or type '0' to go back): " fileName
 
-    read -p "Enter file name to create (or type '0' to go back): " fileName
+	# 0 To go back
+	if [[ $fileName == "0" ]]; then
+		read -r -p "Press any key to try again..." -n1 -s
+		exit 1
+	fi
 
-     if [[ $fileName == "0" ]]
-    then
-        exit 1
-    fi
+	# Validate format: 4-12 letters only
+	if [[ ! "$fileName" =~ ^[A-Za-z]{4,12}$ ]]; then
+		echo "Invalid name; use 4–12 letters (A–Z or a–z) only and no spaces."
+		read -n1 -r -p "Press any key to retry..."
+		continue
+	fi
 
+	# If file is found
+	if [[ -f ./mydb/$dbName/$fileName ]]; then
+		echo "File having the same name already exits. Choose another one! "
+		read -r -p "Press any key to try again..." -n1 -s
+		continue
 
-      # If input is empty (user just pressed Enter)
-    if [[ -z "$fileName" ]]; then
-        echo "You must enter a file name!"
-        read -r -p "Press any key to try again..." -n1 -s
-        continue
-    fi
-
-     resultOfInputValidation=$(./inputValidator CHARS_ONLY $fileName)
-
-    if [[ $resultOfInputValidation != "2" ]]
-    then
-        echo " File name should be any combination of letters from A to Z or a to z"
-        continue
-    fi
-
-
-    if [[ -f ./mydb/$dbName/$fileName ]]
-    then
-        echo "File having the same name already exits. Choose another one! "
-        read -r -p "Press any key to try again..." -n1 -s
-        continue
-
-    fi
-    break
+	fi
+	break
 done
 
-touch mydb/$dbName/$fileName  mydb/$dbName/".$fileName.metadata"
+######## Column Metadata Collection & File Creation
+
+# Ask for number of columns
+read -p "Enter number of columns: " col_count
+
+# Validate it's a number
+if ! [[ "$col_count" =~ ^[1-9][0-9]*$ ]]; then
+	echo "Invalid number of columns"
+	exit 1
+fi
+
+# Prepare to collect names and metadata
+metadata_content=""
+col_names=()
+
+for ((i = 1; i <= col_count; i++)); do
+	# Column name input with validation & uniqueness
+	while true; do
+		if ((i == 1)); then
+			echo "===================================="
+			echo "Column 1 is the Primary Key and must be of type int"
+		fi
+		read -p "Enter column $i name (2–12 letters): " col_name
+
+		# 1) Format check: letters only, 2–12 chars
+		if [[ ! "$col_name" =~ ^[A-Za-z]{2,12}$ ]]; then
+			echo "Invalid column name. Use 2–12 letters only, no spaces or numbers."
+			continue
+		fi
+
+		# 2) Uniqueness check
+		duplicate=false
+		for existing in "${col_names[@]}"; do
+			if [[ "$existing" == "$col_name" ]]; then
+				duplicate=true
+				break
+			fi
+		done
+		if $duplicate; then
+			echo "Column name '$col_name' is already used. Please choose a different name."
+			continue
+		fi
+
+		# Passed both → record it
+		col_names+=("$col_name")
+		break
+	done
+
+	# Build metadata line
+	if ((i == 1)); then
+		metadata_content+=$(printf "%s:%s:%s" "$col_name" "int" "1")
+	else
+		PS3="Enter the data type for column $i (1=int, 2=str, 3=bool): "
+		select col_type in int str bool; do
+			if [[ -n "$col_type" ]]; then
+				metadata_content+=$(printf "%s:%s:%s" "$col_name" "$col_type" "0")
+				break
+			else
+				echo "Invalid choice. Please select 1, 2, or 3."
+			fi
+		done
+	fi
+	metadata_content+=$'\n'
+done
+
+# Only after successful input, create files
+table_path="mydb/$dbName/$fileName"
+meta_path="mydb/$dbName/.${fileName}.metadata"
+
+touch "$table_path"
+printf "%s" "$metadata_content" >"$meta_path"
+
+echo -e "\nTable '$fileName' is created successfully."
 
 exit 0
