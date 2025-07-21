@@ -11,35 +11,52 @@ then
 fi
 
 case $1 in
-    DIGITS_ONLY)
+    DIGITS_ONLY | INT | PK)
         if [[ $2 =~ ^[0-9]+$ ]]
         then
             echo 0 
-            
+        else
+            echo 1
         fi
         ;;
     CHARS_ONLY)
         if [[ $2 =~ ^[A-Za-z]+$ ]]
         then
             echo 0
+        else
+            echo 1
         fi
         ;;
     CAPS_ONLY)
         if [[ $2 =~ ^[A-Z]+$ ]]
         then
             echo 0
+        else
+            echo 1
         fi
         ;;
     LOWER_ONLY)
         if [[ $2 =~ ^[a-z]+$ ]]
         then
             echo 0
+        else
+            echo 1
         fi
         ;;
-    MIX)
+    MIX | STRING)
         if [[ $2 =~ ^[0-9A-Za-z]+$ ]]
         then
             echo 0
+        else
+            echo 1
+        fi
+        ;;
+    BOOLEAN)
+        if [[ $2 =~ ^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|0|1)$ ]]
+        then
+            echo 0
+        else
+            echo 1
         fi
         ;;
     *)

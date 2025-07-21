@@ -1,3 +1,51 @@
-#!/usr/bin/bash
-echo "Insert to table will be here"
-sleep 1
+#! /usr/bin/bash
+
+dbName=$1
+
+tables=$(ls ./mydb/$dbName)
+PS3="Choose a table to select from: "
+select tableName in $tables
+do
+    case $tableName in
+        $tables)
+            clear
+            echo "inserting into table: $tableName"
+            break
+            ;;
+        *)
+            echo invalid input
+            read -n1 -rp "Press any key to continue..." -s
+            break
+            ;;
+    esac
+done
+
+metadataFile="./mydb/$dbName/.$tableName.metadata"
+dataFile="./mydb/$dbName/$tableName"
+
+if [[ ! -f "$metadataFile" || ! -f "$dataFile" ]]; then
+    echo "$metadataFile or $dataFile does not exist!" >> logs
+    echo "internal error: see logs for more details"
+    read -n1 -rp "Press any key to continue..." -s
+    exit 1
+fi
+
+# storing the inserted data in a temporary file and then moving it to the data file
+rm tmp 2>/dev/null
+touch tmp
+
+while read -r line; do
+    columnName=$(echo "$line" | cut -d: -f1)
+    columnType=$(echo "$line" | cut -d: -f2)
+    read -p "enter value for $columnName of type $columnType: " value < /dev/tty
+    inputValidatorResult=$(./inputValidator "$columnType" "$value")
+    if [[ "$inputValidatorResult" != "0" ]]; then
+        echo "Invalid value for column $columnName of type $columnType."
+        exit 1
+    fi
+    printf "$value:" >> tmp
+    #data should be stored in tmp in the same order as metadata
+done < "$metadataFile"
+
+cat tmp >> "$dataFile"
+echo >> "$dataFile"  # add a newline at the end of the file
