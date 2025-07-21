@@ -63,12 +63,12 @@ choose_column_type() {
                     then
                         pk=1
                         echo "Column $columnName is set as primary key."
-                        echo "$columnName:PK" >> "./mydb/$dbName/.$tableName.metadata"
+                        echo "$columnName:INT:1" >> "./mydb/$dbName/.$tableName.metadata"
                         break
                     fi
                 fi
                 echo "Adding column $columnName of type $columnType to table $tableName..."
-                echo "$columnName:$columnType" >> "./mydb/$dbName/.$tableName.metadata"
+                echo "$columnName:$columnType:0" >> "./mydb/$dbName/.$tableName.metadata"
                 break
                 ;;
             *)

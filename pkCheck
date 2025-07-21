@@ -1,10 +1,11 @@
 #! /usr/bin/bash
 dbName=$1
 tableName=$2
-pkValue=$3
+index=$3
+pkValue=$4
 
+table="./mydb/$dbName/$tableName"
 
+data=$(cat $table | cut -d: -f$index)
 
-data="./mydb/$dbName/$tableName"
-
-exit $(cat $data | grep -q "^$pkValue:*")  # Check if the primary key value exists in the metadata file
+exit $(echo $data | grep -q "$pkValue")  # Check if the primary key value exists
