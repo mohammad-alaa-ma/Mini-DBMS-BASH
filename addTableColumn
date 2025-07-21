@@ -1,11 +1,70 @@
-#! /usr/bin/bash
+#!/usr/bin/bash
+
+# ----- Config -----
+METADATA_DIR="./mydb"
+
+# ----- Utilities -----
+
+pause() {
+    read -r -p "Press any key to continue..." -n1 -s
+    echo
+}
+
+validate_column_name() {
+    local name=$1
+
+    if [[ -z "$name" ]]; then
+        echo "You must enter a column name!"
+        return 1
+    fi
+
+    if [[ $(./inputValidator CHARS_ONLY "$name") != "0" ]]; then
+        echo "Column name should contain only letters (A-Z or a-z)."
+        return 1
+    fi
+
+    return 0
+}
+
+choose_column_type() {
+    local dbName=$1
+    local tableName=$2
+    local columnName=$3
+    local metadataFile="$METADATA_DIR/$dbName/.$tableName.metadata"
+
+    PS3="Choose the type of column '$columnName': "
+    select columnType in "INT" "BOOLEAN" "STRING"; do
+        case "$columnType" in
+            "INT"|"BOOLEAN"|"STRING")
+                if [[ $pk -eq 0 && "$columnType" == "INT" ]]; then
+                    read -p "Is this column a primary key? (yes/no): " isPrimaryKey < /dev/tty
+                    if [[ "$isPrimaryKey" =~ ^[yY]([eE][sS])?$ ]]; then
+                        pk=1
+                        echo "Column '$columnName' set as primary key."
+                        echo "$columnName:INT:1" >> "$metadataFile"
+                        break
+                    fi
+                fi
+                echo "Adding column '$columnName' of type '$columnType' to table '$tableName'..."
+                echo "$columnName:$columnType:0" >> "$metadataFile"
+                break
+                ;;
+            *)
+                echo "Invalid column type. Please choose again."
+                ;;
+        esac
+    done
+}
 
 create_table() {
+    local metadataFile="$METADATA_DIR/$dbName/.$tableName.metadata"
+
     echo "Creating table '$tableName' in database '$dbName'..."
 
     while true; do
         clear
-        read -p "Enter column name (or type '0' to finish): " columnName
+        read -p "Enter column name (or type '0' to finish): " columnName < /dev/tty
+
         if [[ "$columnName" == "0" ]]; then
             if [[ $pk -eq 0 ]]; then
                 echo "You must define at least one primary key!"
@@ -20,74 +79,21 @@ create_table() {
             pause
             continue
         fi
-        ./checkForRepeatedColumnName $dbName $tableName $columnName
-        if [[ $? -eq 0 ]];  # Check if the column name already exists
-        then
-            echo "Column $columnName already exists in table $tableName. Please choose a different name."
+
+        if ./checkForRepeatedColumnName "$dbName" "$tableName" "$columnName"; then
+            echo "Column '$columnName' already exists in table '$tableName'. Please choose a different name."
             pause
             continue
         fi
 
-        choose_column_type $dbName $tableName $columnName
+        choose_column_type "$dbName" "$tableName" "$columnName"
     done
 }
 
-validate_column_name() {
-    local name=$1
+# ----- Main Execution -----
 
-    if [[ -z "$name" ]]; then
-        echo "You must enter a column name!"
-        return 1
-    fi
-
-    local result
-    result=$(./inputValidator CHARS_ONLY "$name")
-    if [[ "$result" != "0" ]]; then
-        echo "Column name should be any combination of letters from A to Z or a to z"
-        return 1
-    fi
-
-    return 0
-}
-
-choose_column_type() {
-    columnName=$3
-
-    PS3="Choose the type of column '$columnName': "
-    select columnType in "INT" "BOOLEAN" "STRING"; do
-        case "$columnType" in
-            "INT"|"BOOLEAN"|"STRING")
-                if [[ $pk -eq 0 && $columnType == "INT" ]]; then
-                    read -p "Is this column a primary key? (yes/no): " isPrimaryKey
-                    if [[ "$isPrimaryKey" =~ ^[yY]([eE][sS])?$ ]]
-                    then
-                        pk=1
-                        echo "Column $columnName is set as primary key."
-                        echo "$columnName:INT:1" >> "./mydb/$dbName/.$tableName.metadata"
-                        break
-                    fi
-                fi
-                echo "Adding column $columnName of type $columnType to table $tableName..."
-                echo "$columnName:$columnType:0" >> "./mydb/$dbName/.$tableName.metadata"
-                break
-                ;;
-            *)
-                echo "Invalid column type. Please choose a valid type."
-                ;;
-        esac
-    done
-}
-
-pause() {
-    read -r -p "Press any key to continue..." -n1 -s
-    echo
-}
-
-# --- Main Execution ---
-
-if [[ $# -lt 2 ]]
-then
-    echo "internal error: database name or table name is not provided"
+if [[ $# -lt 2 ]]; then
+    echo "Internal error: database name or table name not provided."
     exit 1
 fi
 
@@ -95,6 +101,6 @@ dbName=$1
 tableName=$2
 pk=0
 
-create_table $dbName $tableName
+create_table
 pause
 clear
