@@ -41,6 +41,8 @@ while read -r line; do
     inputValidatorResult=$(./inputValidator "$columnType" "$value")
     if [[ "$inputValidatorResult" != "0" ]]; then
         echo "Invalid value for column $columnName of type $columnType."
+        read -n1 -rp "Press any key to continue..." -s
+        rm tmp 2>/dev/null
         exit 1
     fi
     printf "$value:" >> tmp
