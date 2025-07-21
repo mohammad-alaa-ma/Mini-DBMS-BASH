@@ -1,4 +1,41 @@
 #!/usr/bin/bash
-echo "Delete Table will be here"
-sleep 2
 
+# Check if database name argument is provided
+if [ $# -lt 1 ]; then
+	echo "invalid input: database name required as argument."
+	exit 1
+fi
+
+dbName=$1
+
+# Loop until user enters a non-empty table name
+while true; do
+	read -p "Enter the table's name to delete (or type '0' to go back): " tableName
+
+	if [[ $tableName == "0" ]]; then
+		exit 1
+	fi
+
+	if [[ -z "$tableName" ]]; then
+		echo "You must enter a file name!"
+		read -r -p "Press any key to try again..." -n1 -s
+		echo
+		continue
+	fi
+
+	# Check if table file exists
+	if [ ! -f "./mydb/$dbName/$tableName" ]; then
+		echo "Table '$tableName' doesn't exist in database '$dbName'."
+		read -r -p "Press any key to try again..." -n1 -s
+		echo
+		continue
+	fi
+
+	break
+done
+
+# Delete table file and metadata (if exists)
+rm "./mydb/$dbName/$tableName" "./mydb/$dbName/.$tableName.metadata" 2>/dev/null
+
+echo "File '$tableName' in Database '$dbName' is removed successfully."
+read -r -p "Press any key to try again..." -n1 -s 
