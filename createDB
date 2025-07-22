@@ -1,14 +1,15 @@
 #! /usr/bin/bash
 
-while true
+while true; do
 
-do
-    read -p "Enter your Database name or type "0" to go back: " name
+	clear
+	read -p "Enter your Database name or type "0" to go back: " name
 
-    if [[ $name == "0" ]]
-    then
-        exit 1
-    fi
+	# 0 To go back
+	if [[ $name == "0" ]]; then
+		read -r -p "Press any key to try again..." -n1 -s
+		exit 1
+	fi
 
     resultOfInputValidation=$(./inputValidator CHARS_ONLY $name)
     
@@ -18,12 +19,12 @@ do
         continue
     fi
 
-    if [[ -d ./mydb/$name ]]
-    then 
-        echo Database with the same name already exists
-        continue
-    fi
-    break
+	# If directory is found
+	if [[ -d ./mydb/$name ]]; then
+		echo Database with the same name already exists
+		continue
+	fi
+	break
 done
 
 mkdir -p ./mydb/$name
