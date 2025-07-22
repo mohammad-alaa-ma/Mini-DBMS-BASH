@@ -1,0 +1,7 @@
+#! /usr/bin/bash
+
+dbname=$1
+table=$2
+columnName=$3
+
+columnIndex=$(head -1 "./mydb/$dbname/$table" | tr ':' '\n' | grep -n "^$columnName$" | cut -d: -f1)
