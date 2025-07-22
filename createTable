@@ -50,7 +50,7 @@ for ((i = 1; i <= col_count; i++)); do
 	while true; do
 		if ((i == 1)); then
 			echo "===================================="
-			echo "Column 1 is the Primary Key and must be of type int"
+			echo "Column 1 is the Primary Key and can be of type (int/str)"
 		fi
 		read -p "Enter column $i name (2–12 letters): " col_name
 
@@ -80,8 +80,18 @@ for ((i = 1; i <= col_count; i++)); do
 
 	# Build metadata line
 	if ((i == 1)); then
-		metadata_content+=$(printf "%s:%s:%s" "$col_name" "int" "1")
+		# Ask type only int or str, default PK
+		PS3="Enter data type for column 1 (1=int, 2=str): "
+		select col_type in int str; do
+			if [[ -n "$col_type" ]]; then
+				metadata_content+=$(printf "%s:%s:%s" "$col_name" "$col_type" "1")
+				break
+			else
+				echo "Invalid choice. Please select 1 or 2."
+			fi
+		done
 	else
+		# Other columns: ask full int, str, bool, default no PK
 		PS3="Enter the data type for column $i (1=int, 2=str, 3=bool): "
 		select col_type in int str bool; do
 			if [[ -n "$col_type" ]]; then
