@@ -1,3 +1,106 @@
 #!/usr/bin/bash
-echo "Select from table will be here"
-sleep 1
+
+dbName=$1
+dbPath="./mydb/$dbName"
+
+# List tables (excluding metadata)
+tables=($(ls "$dbPath" | grep -v '^\.' | grep -v '\.metadata$'))
+if [[ ${#tables[@]} -eq 0 ]]; then
+  echo "No tables in '$dbName'."
+  exit 1
+fi
+
+# Let user select a table
+echo "Tables in '$dbName':"
+PS3="Enter your choice (1-${#tables[@]}): "
+select tableName in "${tables[@]}"; do
+  if [[ -z "$tableName" ]]; then
+    echo "Exiting."
+    exit 0
+  fi
+  tablePath="$dbPath/$tableName"
+  metaFile="$dbPath/.${tableName}.metadata"
+  if [[ ! -f "$tablePath" || ! -f "$metaFile" ]]; then
+    echo "Table or metadata not found."
+    exit 1
+  fi
+  break
+done
+
+
+# Load column names into array
+metaCols=($(cut -d":" -f1 "$metaFile"))
+
+
+# Show full table
+echo -e "\nSelected table: $tableName"
+echo "Content of Table $tableName:"
+
+
+{
+  echo "${metaCols[*]}" | tr ' ' ':'
+  cat "$tablePath"
+} | column -t -s ":"
+
+
+# Loop to get valid column name or 0 to go back
+while true; do
+  read -p $'\nEnter column name to filter (or 0 to go back): ' col
+  if [[ "$col" == "0" ]]; then
+    echo "Returning to menu."
+    exit 0
+  fi
+
+  if [[ -z "$col" ]]; then
+  echo "No input entered. Please try again."
+  continue
+  fi
+
+  idx=-1
+  for i in "${!metaCols[@]}"; do
+    if [[ "${metaCols[$i]}" == "$col" ]]; then
+      idx=$((i+1))
+      break
+    fi
+  done
+
+  if [[ $idx -eq -1 ]]; then
+    echo "Column '$col' not found. Try again."
+  else
+    break
+  fi
+done
+
+# Loop to search values until user types 0 to exit
+while true; do
+  read -p "Enter value to match in '$col' (or 0 to go back): " val
+  if [[ "$val" == "0" ]]; then
+    echo "Returning to menu."
+    sleep 1
+    exit 0
+  fi
+ 
+
+  # awk to select only fields having idx == val
+  result=$(awk -v c="$idx" -v v="$val" '
+    BEGIN {
+      FS = ":"
+    }
+    # For each line where field c equals v, print the line
+    { if ($c == v) 
+      print
+    
+    }' "$tablePath")
+   
+
+  if [[ -n "$result" ]]; then
+    echo -e "\nRows where $col = $val:"
+    {
+      echo "${metaCols[*]}" | tr ' ' ':'
+      echo "$result"
+    } | column -t -s ":"
+  else
+    echo "No matching records found."
+  fi
+
+done
