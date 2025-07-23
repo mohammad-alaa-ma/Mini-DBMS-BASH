@@ -26,7 +26,6 @@ while read -r line; do
     "=")
       if [ "$value" == "$columnValue" ]; then
         rows[$index]=$rowIndex
-        echo "Row $rowIndex matches: $line"
         index+=1
       fi
       ;;

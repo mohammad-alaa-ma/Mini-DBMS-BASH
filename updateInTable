@@ -1,3 +1,25 @@
 #!/usr/bin/bash
-echo "Update in table will be here"
-sleep 1
+
+dbName=$1
+
+availableTables=$(ls "./mydb/$dbName")
+
+while true
+do
+    clear
+    PS3='enter the number of the table or enter to return: '
+    select table in $availableTables
+    do
+        if [ -z "$table" ]; then
+            exit 0
+        fi
+        read -p "Enter column name to update: " columnName
+        read -p "Enter value to compare to: " compareValue
+        read -p 'Enter the operator (=, !=, <, >): ' operator
+        read -p "Enter newValue: " newValue
+        ./UpdateRecord "$dbName" "$table" "$columnName" "$compareValue" "$operator" "$newValue"
+        read -n1 -rp "Press any key to continue..." -s
+        echo
+        break;
+    done
+done

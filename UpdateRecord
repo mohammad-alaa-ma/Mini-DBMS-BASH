@@ -1,0 +1,85 @@
+#!/usr/bin/bash
+
+# This script updates a specific entry in a table file.
+
+dbname=$1
+table=$2
+columnName=$3
+Value=$4
+operator=$5
+newValue=$6
+columnIndex=$(./getColumnIndex "$dbname" "$table" "$columnName")
+
+if [[ -z "$columnIndex" || $? -ne 0 ]]; then
+  echo "Column '$columnName' not found in table '$table'."
+  exit 1
+fi
+tablePath="./mydb/$dbname/$table"
+metaPath="./mydb/$dbname/.$table.metadata"
+
+
+matchedRows=$(./getRows "$dbname" "$table" "$columnName" "$Value" "$operator")
+
+if [[ $? -ne 0 ]]; then
+  echo "Error retrieving rows. Please check the inputs."
+  exit 1
+fi
+
+if [[ "$matchedRows" == "-1" || -z "$matchedRows" ]]; then
+  echo "No matching rows found."
+  exit 1
+fi
+
+#reverse order the matched rows to update the last row first
+# this is to avoid issues with line numbers changing after each update
+matchedRows=$(echo "$matchedRows" | tr ' ' '\n' | sort -r | tr '\n' ' ')
+
+## check if this column is primary key
+metaData="./mydb/$dbname/.$table.metadata"
+isPK=0
+if grep -q "^$columnName:.*:1$" "$metaData"; then
+    isPK=1
+    ./pkCheck "$dbname" "$table" "$columnIndex" "$newValue"
+    if [ $? -eq 0 ]; then
+        echo "Primary key value '$newValue' already exists. Update aborted."
+        exit 1  
+    fi
+fi
+
+#check if the entered value is valid for this column
+columnType=$(grep "^$columnName:" "$metaData" | cut -d: -f2)
+inputValidatorResult=$(./inputValidator "$columnType" "$newValue")
+if [[ "$inputValidatorResult" != "0" ]]; then
+    echo "Invalid value for column $columnName of type $columnType."
+    exit 1
+fi
+
+columnIndex=$(./getColumnIndex "$dbname" "$table" "$columnName")
+
+declare -i rowsAffected=0
+
+for row in $matchedRows; do
+
+    line=$(sed -n "${row}p" "$tablePath")
+    newline=''
+    for i in $(seq 1 4); do
+    if [ $i -eq "$columnIndex" ]; then
+        newline+="$newValue:"
+    else
+        newline+=$(echo "$line" | cut -d':' -f"$i"):
+    fi
+    done
+    # remove the trailing colon
+    newline=${newline%:}
+    # finally, replace the old line with the new one in the table file
+    sed -i "${row}s/.*/$newline/" "$tablePath"
+    rowsAffected+=1
+    
+    if [[ $isPK -eq 1 ]]; then
+        #end after updating the row since it is a primary key
+        break
+    fi
+
+done
+
+echo "$rowsAffected rows affected"
