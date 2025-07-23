@@ -7,9 +7,20 @@ if [ $# -lt 1 ]; then
 fi
 
 dbName=$1
+tables=$(ls -f ./mydb/$dbName | grep -v '^\.')
+if [[ -z "$tables" ]]; then
+	echo "No tables found in database '$dbName'."
+	read -r -p "Press any key to try again..." -n1 -s
+	exit 1
+fi
+
 
 # Loop until user enters a non-empty table name
 while true; do
+	echo "Available tables in database '$dbName':"
+	for table in $tables; do
+		echo "- $table"
+	done
 	read -p "Enter the table's name to delete (or type '0' to go back): " tableName
 
 	if [[ $tableName == "0" ]]; then
