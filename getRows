@@ -1,0 +1,64 @@
+#! /usr/bin/bash
+
+dbname=$1
+table=$2
+columnName=$3
+columnValue=$4
+operator=$5
+columnIndex=$(./getColumnIndex "$dbname" "$table" "$columnName")
+
+if [ -z "$columnIndex" ]; then
+  echo "Column '$columnName' not found in table '$table'."
+  exit 1
+fi
+
+#return the rows that match the column value
+declare -i index=1
+declare -i rowIndex=1
+rows=()
+# Read the table file line by line
+while read -r line; do
+  # Extract the value at the specified column index
+  value=$(echo "$line" | cut -d':' -f"$columnIndex")
+  
+  # Check if the value matches the specified column value
+  case $operator in
+    "=")
+      if [ "$value" == "$columnValue" ]; then
+        rows[$index]=$rowIndex
+        echo "Row $rowIndex matches: $line"
+        index+=1
+      fi
+      ;;
+    "!=")
+      if [ "$value" != "$columnValue" ]; then
+        rows[$index]=$rowIndex
+        index+=1
+      fi
+      ;;
+    "<")
+      if [[ "$value" < "$columnValue" ]]; then
+        rows[$index]=$rowIndex
+        index+=1
+      fi
+      ;;
+    ">")
+      if [[ "$value" > "$columnValue" ]]; then
+        rows[$index]=$rowIndex
+        index+=1
+      fi
+      ;;
+    *)
+      echo "Invalid operator: $operator"
+      exit 1
+      ;;
+  esac
+  rowIndex+=1
+done < "./mydb/$dbname/$table"
+
+# Print the matching row indices
+if [ ${#rows[@]} -eq 0 ]; then
+  echo "-1"
+else
+  echo "${rows[@]}"
+fi

@@ -4,4 +4,6 @@ dbname=$1
 table=$2
 columnName=$3
 
-columnIndex=$(head -1 "./mydb/$dbname/$table" | tr ':' '\n' | grep -n "^$columnName$" | cut -d: -f1)
+columnIndex=$(grep -n $columnName "./mydb/$dbname/.$table.metadata" | head -1 | cut -d: -f1)
+
+echo $columnIndex
