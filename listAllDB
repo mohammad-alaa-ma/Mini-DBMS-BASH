@@ -9,5 +9,5 @@ fi
 
 for db in $mydbs
 do
-    echo Db name: $db
+    echo "- $db"
 done
