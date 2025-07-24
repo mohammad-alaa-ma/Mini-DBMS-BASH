@@ -9,14 +9,23 @@ Value=$4
 operator=$5
 newValue=$6
 columnIndex=$(./getColumnIndex "$dbname" "$table" "$columnName")
-
+if [[ -z "$columnName" || -z "$newValue" ]]; then
+  echo "Usage: $0 <dbname> <table> <columnName> <Value> <operator> <newValue>"
+  exit 1
+fi
 if [[ -z "$columnIndex" || $? -ne 0 ]]; then
   echo "Column '$columnName' not found in table '$table'."
   exit 1
 fi
-tablePath="./mydb/$dbname/$table"
-metaPath="./mydb/$dbname/.$table.metadata"
 
+if [[ -z "$Value" || -z "$operator" ]]; then
+  #update all rows in the table
+  Value='@'
+  operator='!='
+fi
+
+
+tablePath="./mydb/$dbname/$table"
 
 matchedRows=$(./getRows "$dbname" "$table" "$columnName" "$Value" "$operator")
 

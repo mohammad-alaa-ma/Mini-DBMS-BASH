@@ -7,16 +7,28 @@ availableTables=$(ls "./mydb/$dbName")
 while true
 do
     clear
-    PS3='enter the number of the table or enter to return: '
+    PS3='enter the number of the table or 0 to go back: '
     select table in $availableTables
     do
-        if [ -z "$table" ]; then
+        if [[ "$REPLY" == "0" ]]; then
             exit 0
         fi
-        read -p "Enter column name to update: " columnName
-        read -p "Enter value to compare to: " compareValue
-        read -p 'Enter the operator (=, !=, <, >): ' operator
-        read -p "Enter newValue: " newValue
+        if [[ -z "$table" ]]; then
+            echo "You must select a table!"
+            read -n1 -rp "Press any key to continue..." -s
+            echo
+            continue
+        fi
+        read -rp "Enter column name to update: " columnName
+        read -rp "Enter value to compare to: (or leave clear to update all)" compareValue
+        read -rp 'Enter the operator (=, !=, <, >): (or leave clear to update all)' operator
+        read -rp "Enter newValue: " newValue
+        if [[ -z "$columnName" || -z "$newValue" ]]; then
+            echo "you must provide the column name and the new value"
+            read -n1 -rp "Press any key to continue..." -s
+            echo
+            continue
+        fi
         ./UpdateRecord "$dbName" "$table" "$columnName" "$compareValue" "$operator" "$newValue"
         read -n1 -rp "Press any key to continue..." -s
         echo
