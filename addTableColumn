@@ -36,8 +36,8 @@ choose_column_type() {
     select columnType in "INT" "BOOLEAN" "STRING"; do
         case "$columnType" in
             "INT"|"BOOLEAN"|"STRING")
-                if [[ $pk -eq 0 && "$columnType" == "INT" ]]; then
-                    read -p "Is this column a primary key? (yes/no): " isPrimaryKey < /dev/tty
+                if [[ $pk -eq 0 ]] && [[ "$columnType" == "INT" || "$columnType" == "STRING" ]]; then
+                    read -p $'Is this column a primary key(unique)? \ntype yes if so: ' isPrimaryKey < /dev/tty
                     if [[ "$isPrimaryKey" =~ ^[yY]([eE][sS])?$ ]]; then
                         pk=1
                         echo "Column '$columnName' set as primary key."
