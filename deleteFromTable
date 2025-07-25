@@ -1,3 +1,156 @@
 #!/usr/bin/bash
-echo "Delete from table will be here"
-sleep 1
+
+dbName=$1
+dbPath="./mydb/$dbName"
+
+# List tables (excluding metadata)
+tables=($(ls "$dbPath" | grep -v '^\.' | grep -v '\.metadata$'))
+if [[ ${#tables[@]} -eq 0 ]]; then
+  echo "No tables in '$dbName'."
+  exit 1
+fi
+
+# Let user select a table
+echo "Tables in '$dbName':"
+PS3="Enter your choice (1-${#tables[@]}): "
+select tableName in "${tables[@]}"; do
+  if [[ -z "$tableName" ]]; then
+    echo "Exiting."
+    exit 0
+  fi
+  
+  tablePath="$dbPath/$tableName"
+  metaFile="$dbPath/.${tableName}.metadata"
+  if [[ ! -f "$tablePath" || ! -f "$metaFile" ]]; then
+    echo "Table or metadata not found."
+    exit 1
+  fi
+  break
+done
+
+# Load column names into array
+metaCols=($(cut -d":" -f1 "$metaFile"))
+
+while true; do
+
+  # Show full table
+  echo -e "Selected table: $tableName"
+
+  # Check for empty table file
+  if [[ ! -s "$tablePath" ]]; then
+    echo "file is empty"
+    read -r -p 'Press any key to return to menu ...' -n1 -s
+    exit 0
+  fi
+
+
+  echo "Content of Table $tableName:"
+  {
+    echo "${metaCols[*]}" | tr ' ' ':'
+    cat "$tablePath"
+  } | column -t -s ":"
+
+
+  # Choose column
+  while true; do
+  
+  read -p "Enter column name to filter, or '*' to delete ALL rows, or '0' to exit): " col
+
+  # If user wants to clear the entire table:
+  if [[ "$col" == "*" ]]; then
+  read -p 'Type "SURE" to confirm: ' confirm
+
+    if [[ "$confirm" == "SURE" ]]; then
+       > "$tablePath"
+       > "$metaFile"
+       read -r -p "All rows deleted from table '$tableName'."  -n1 -s
+       exit 0
+    else
+      echo "To confirm deleting type 'SURE'"
+      #read -r -p "Press any key to try again..." -n1 -s
+      continue
+    fi
+  fi
+
+  
+  if [[ "$col" == "0" ]]; then
+    echo "Returning to menu."
+    exit 0
+  fi
+
+  if [[ -z "$col" ]]; then
+  echo "No input entered. Please try again."
+  continue
+  fi
+
+  idx=-1
+  for i in "${!metaCols[@]}"; do
+    if [[ "${metaCols[$i]}" == "$col" ]]; then
+      idx=$((i+1))
+      break
+    fi
+  done
+
+  if (( idx == -1 )); then
+    echo "Column '$col' not found. Try again."
+  else
+    break
+  fi
+ done
+
+  # Value and deletion loop
+  while true; do
+
+    read -p "Enter value to delete in '$col' (or 0 to exit): " val
+    if [[ "$val" == "0" ]]; then
+     echo "Exiting."
+     exit 0
+    fi
+
+
+    # awk to select only matching rows
+    result=$(awk -v c="$idx" -v v="$val" '
+    BEGIN {
+      FS = ":"
+    }
+    # For each line where field c equals v, print the line
+    { if ($c == v) 
+      print
+    }' "$tablePath")
+
+    if [[ -z "$result" ]]; then
+      echo "No matching records found."
+      else
+      # build new table without those rows
+      newTable=$(awk -v c="$idx" -v v="$val" '
+      BEGIN {
+        FS=OFS=":"
+        } 
+        { if ($c!=v)
+            print 
+        }' "$tablePath")
+      
+      # overwrite the table
+      echo "$newTable" > "$tablePath"
+      echo "Deleted rows where $col = '$val'."
+    
+     {
+       echo "${metaCols[*]}" | tr ' ' ':'
+       echo "$result"
+     } | column -t -s ":"
+    
+     # optionally show updated table:
+     echo -e "\nUpdated content of $tableName:"
+     {
+       echo "${metaCols[*]}" | tr ' ' ':'
+       echo "$newTable"
+     } | column -t -s ":"
+     read -r -p "Press any key to try again..." -n1 -s
+     break
+     #exit 0  
+   fi
+ done
+
+  clear
+
+done
