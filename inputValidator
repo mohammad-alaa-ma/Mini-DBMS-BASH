@@ -10,6 +10,12 @@ then
     exit 1
 fi
 
+if [[ $# -ne 2 ]]
+then
+    echo 1
+    exit 1
+fi
+
 case $1 in
     DIGITS_ONLY | INT | PK)
         if [[ $2 =~ ^[0-9]+$ ]]
@@ -60,5 +66,6 @@ case $1 in
         fi
         ;;
     *)
+        echo 1
         echo 1
 esac
