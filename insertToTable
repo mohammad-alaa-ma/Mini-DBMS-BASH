@@ -3,7 +3,7 @@
 dbName=$1
 
 tables=$(ls ./mydb/$dbName)
-PS3="Choose a table to select from: "
+PS3="Choose a table to insert into: "
 select tableName in $tables
 do
         if [[ -n "$tableName" ]]; then
