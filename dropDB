@@ -1,20 +1,32 @@
 #!/usr/bin/bash
 
-if [ $# -lt 1 ]
+# ─── ANSI Colors ─────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+
+if [ $# -lt 1 ] || [[ -z "$1" ]]
 then
-    echo "invalid input"
+    echo -e "${RED}❌ [ Error ] Invalid input. Please provide a database name.${NC}"
+    read -r -p "Press any key to go to Main Menu ..." -n1 -s
     exit 1
 fi
 
 if [ ! -d ./mydb/$1 ]
 then
-    echo "doesn't exist"
+    echo -e "${RED}❌ [ Error ] Database '$1' does not exist.${NC}"
+    read -r -p "Press any key to go to Main Menu ..." -n1 -s
     exit 1
 fi
 
 rm -rf ./mydb/$1
 
-echo database $1 removed successfuly
+echo -e "${CYAN}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}🗑️  [ Success ] Database '$1' removed successfully.${NC}"
+
+read -r -p "Press any key to go to Main Menu ..." -n1 -s
 
 exit 0
-
