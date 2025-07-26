@@ -1,31 +1,57 @@
 #!/usr/bin/bash
 
+
+# ─── ANSI Colors ─────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+
+
 dbName=$1
 dbPath="./mydb/$dbName"
 
 # List tables (excluding metadata)
 tables=($(ls "$dbPath" | grep -v '^\.' | grep -v '\.metadata$'))
 if [[ ${#tables[@]} -eq 0 ]]; then
-  echo "No tables in '$dbName'."
+  echo -e "${RED}[Error] ❌ No tables in '$dbName'.${NC}"
   exit 1
 fi
 
-# Let user select a table
-echo "Tables in '$dbName':"
-PS3="Enter your choice (1-${#tables[@]}): "
-select tableName in "${tables[@]}"; do
-  if [[ -z "$tableName" ]]; then
-    echo "Exiting."
-    exit 0
-  fi
-  
-  tablePath="$dbPath/$tableName"
-  metaFile="$dbPath/.${tableName}.metadata"
-  if [[ ! -f "$tablePath" || ! -f "$metaFile" ]]; then
-    echo "Table or metadata not found."
-    exit 1
-  fi
-  break
+# Let user select a table (with a "Cancel" option)
+options=( "${tables[@]}" "Cancel" )
+
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "${CYAN}[Info] 📋 Available Tables in '$dbName'${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+PS3="📌 Enter your choice (1-${#options[@]}): "
+select tableName in "${options[@]}"; do
+  case "$tableName" in
+    "Cancel")
+      echo -e "${YELLOW}[Info] 🔙 Returning to Menu...${NC}"
+      exit 0
+      ;;
+    "")
+      # Out of range or non‑numeric
+      echo -e "${YELLOW}[Warning]⚠️  Invalid selection. Please try again.${NC}"
+      ;;
+    *)
+      tablePath="$dbPath/$tableName"
+      metaFile="$dbPath/.${tableName}.metadata"
+
+      if [[ ! -f "$tablePath" ]]; then
+         echo -e "${RED}[Error] ❌ Table file '$tableName' not found. Try again.${NC}"
+      elif [[ ! -f "$metaFile" ]]; then
+         echo -e "${RED}[Error] ❌ Metadata for '$tableName' not found. Try again.${NC}"
+      else
+        # valid selection
+        break
+      fi
+      ;;
+  esac
 done
 
 # Load column names into array
@@ -34,17 +60,19 @@ metaCols=($(cut -d":" -f1 "$metaFile"))
 while true; do
 
   # Show full table
-  echo -e "Selected table: $tableName"
+  echo -e "\n📂 ${CYAN} Selected table: $tableName${NC}"
 
   # Check for empty table file
   if [[ ! -s "$tablePath" ]]; then
-    echo "file is empty"
+    echo -e "${YELLOW}[Warning] ⚠️  Table file is empty.${NC}"
     read -r -p 'Press any key to return to menu ...' -n1 -s
     exit 0
   fi
 
 
-  echo "Content of Table $tableName:"
+  echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo -e "${CYAN}[Info] 📊 Content of Table $tableName${NC}"
+  echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   {
     echo "${metaCols[*]}" | tr ' ' ':'
     cat "$tablePath"
@@ -66,20 +94,19 @@ while true; do
        read -r -p "All rows deleted from table '$tableName'."  -n1 -s
        exit 0
     else
-      echo "To confirm deleting type 'SURE'"
-      #read -r -p "Press any key to try again..." -n1 -s
+      echo -e "${YELLOW}⚠️  To confirm deletion, type 'SURE'.${NC}"
       continue
     fi
   fi
 
   
   if [[ "$col" == "0" ]]; then
-    echo "Returning to menu."
+    echo "${YELLOW}[Info] 🔙 Returning to menu."
     exit 0
   fi
 
   if [[ -z "$col" ]]; then
-  echo "No input entered. Please try again."
+  echo -e "${YELLOW}[Warning] ⚠️  No input entered. Please try again.${NC}"
   continue
   fi
 
@@ -92,7 +119,7 @@ while true; do
   done
 
   if (( idx == -1 )); then
-    echo "Column '$col' not found. Try again."
+    echo -e "${RED}[Error] ❌ Column '$col' not found. Try again.${NC}"
   else
     break
   fi
@@ -103,7 +130,7 @@ while true; do
 
     read -p "Enter value to delete in '$col' (or 0 to exit): " val
     if [[ "$val" == "0" ]]; then
-     echo "Exiting."
+     echo -e "${YELLOW}[Info] 🔙 Exiting.${NC}"
      exit 0
     fi
 
@@ -119,7 +146,7 @@ while true; do
     }' "$tablePath")
 
     if [[ -z "$result" ]]; then
-      echo "No matching records found."
+      echo -e "${YELLOW}[Info] 🔍 No matching records found.${NC}"
       else
       # build new table without those rows
       newTable=$(awk -v c="$idx" -v v="$val" '
@@ -132,15 +159,16 @@ while true; do
       
       # overwrite the table
       echo "$newTable" > "$tablePath"
-      echo "Deleted rows where $col = '$val'."
+      echo -e "${GREEN}[Success]✅ Deleted rows where $col = '$val'.${NC}"
     
      {
        echo "${metaCols[*]}" | tr ' ' ':'
        echo "$result"
      } | column -t -s ":"
     
-     # optionally show updated table:
-     echo -e "\nUpdated content of $tableName:"
+     # Show updated table:
+     echo -e "\n${CYAN}[Info] 📋 Updated content of $tableName:${NC}"
+     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
      {
        echo "${metaCols[*]}" | tr ' ' ':'
        echo "$newTable"
