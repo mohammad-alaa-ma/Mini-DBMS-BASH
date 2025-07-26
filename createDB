@@ -1,31 +1,45 @@
 #! /usr/bin/bash
 
+# ─── ANSI Colors ─────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+
 while true; do
 
 	clear
-	read -p "Enter your Database name or type "0" to go back: " name
+	read -p "📘 [Info] Enter your Database name or type '0' to go back: " name
 
 	# 0 To go back
 	if [[ $name == "0" ]]; then
-		read -r -p "Press any key to try again..." -n1 -s
+	        echo
+		read -r -p "🔙 [Info] Press any key to try again..." -n1 -s
 		exit 1
 	fi
 
 	# Validate: 4-12 letters only (A-Z, a-z), no spaces, no empty input
 	if [[ ! "$name" =~ ^[A-Za-z]{4,12}$ ]]; then
-		echo "Database name must be 4–12 letters only (A-Z or a-z), no spaces."
-		read -r -p "Press any key to try again..." -n1 -s
+	        echo
+		echo -e "${YELLOW}⚠️ [Warning] Database name must be 4–12 letters only (A-Z or a-z), no spaces.${NC}"
+		echo
+		read -r -p "🔁 [Info] Press any key to try again..." -n1 -s
 		continue
 	fi
 
 	# If directory is found
 	if [[ -d ./mydb/$name ]]; then
-		echo Database with the same name already exists
+	   echo -e "${RED}❌ [Error] Database with the same name already exists${NC}"
 		continue
 	fi
 	break
 done
 
 mkdir -p ./mydb/$name
+echo
+read -r -p "✅ [Success] Your database $name is created, Press any key to go to main menu...." -n1 -s
 
 exit 0
