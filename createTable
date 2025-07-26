@@ -1,70 +1,117 @@
 #!/usr/bin/bash
 
-prompt_table_name() {
-    while true
-    do
-        read -p "Enter table name to create (or type '0' to go back): " tableName
+###### Checking for file's format and not created before
+dbName=$1
 
-        if [[ $tableName == "0" ]]; then
-            exit 1
-        fi
+while true; do
+	clear
+	read -p "Enter file name to create (or type '0' to go back): " fileName
 
-        if ! validate_table_name $tableName; then
-            pause
-            continue
-        fi
+	# 0 To go back
+	if [[ $fileName == "0" ]]; then
+		read -r -p "Press any key to try again..." -n1 -s
+		exit 1
+	fi
 
-        if table_exists $dbName $tableName; then
-            echo "Table with the same name already exists. Choose another one!"
-            pause
-            continue
-        fi
+	# Validate format: 4-12 letters only
+	if [[ ! "$fileName" =~ ^[A-Za-z]{4,12}$ ]]; then
+		echo "Invalid name; use 4–12 letters (A–Z or a–z) only and no spaces."
+		read -n1 -r -p "Press any key to retry..."
+		continue
+	fi
 
-        break
-    done
-}
+	# If file is found
+	if [[ -f ./mydb/$dbName/$fileName ]]; then
+		echo "File having the same name already exits. Choose another one! "
+		read -r -p "Press any key to try again..." -n1 -s
+		continue
 
-validate_table_name() {
-    if [[ -z "$tableName" ]]; then
-        echo "You must enter a table name!"
-        return 1
-    fi
+	fi
+	break
+done
 
-    local result
-    result=$(./inputValidator CHARS_ONLY "$tableName")
+######## Column Metadata Collection & File Creation
 
-    if [[ $result != "0" ]]; then
-        echo "Table name should be any combination of letters from A to Z or a to z"
-        return 1
-    fi
+# Ask for number of columns
+read -p "Enter number of columns: " col_count
 
-    return 0
-}
+# Validate it's a number
+if ! [[ "$col_count" =~ ^[1-9][0-9]*$ ]]; then
+	echo "Invalid number of columns"
+	exit 1
+fi
 
-table_exists() {
-    [[ -f "./mydb/$dbName/$tableName" ]]
-}
+# Prepare to collect names and metadata
+metadata_content=""
+col_names=()
 
-pause() {
-    read -r -p "Press any key to continue..." -n1 -s
-    echo
-}
+for ((i = 1; i <= col_count; i++)); do
+	# Column name input with validation & uniqueness
+	while true; do
+		if ((i == 1)); then
+			echo "===================================="
+			echo "Column 1 is the Primary Key and can be of type (int/str)"
+		fi
+		read -p "Enter column $i name (2–12 letters): " col_name
 
-create_table_files() {
-    touch "./mydb/$dbName/$tableName" "./mydb/$dbName/.$tableName.metadata"
-}
+		# 1) Format check: letters only, 2–12 chars
+		if [[ ! "$col_name" =~ ^[A-Za-z]{2,12}$ ]]; then
+			echo "Invalid column name. Use 2–12 letters only, no spaces or numbers."
+			continue
+		fi
 
-main() {
-    dbName=$1
-    if [[ -z "$dbName" ]]; then
-        echo "Database name is required"
-        exit 1
-    fi
+		# 2) Uniqueness check
+		duplicate=false
+		for existing in "${col_names[@]}"; do
+			if [[ "$existing" == "$col_name" ]]; then
+				duplicate=true
+				break
+			fi
+		done
+		if $duplicate; then
+			echo "Column name '$col_name' is already used. Please choose a different name."
+			continue
+		fi
 
-    prompt_table_name
-    create_table_files
-    ./addTableColumn "$dbName" "$tableName"
-    exit 0
-}
+		# Passed both → record it
+		col_names+=("$col_name")
+		break
+	done
 
-main $@
+	# Build metadata line
+	if ((i == 1)); then
+		# Ask type only int or str, default PK
+		PS3="Enter data type for column 1 (1=INT, 2=STRING): "
+		select col_type in "INT" "STRING"; do
+			if [[ -n "$col_type" ]]; then
+				metadata_content+=$(printf "%s:%s:%s" "$col_name" "$col_type" "1")
+				break
+			else
+				echo "Invalid choice. Please select 1 or 2."
+			fi
+		done
+	else
+		# Other columns: ask full int, str, bool, default no PK
+		PS3="Enter the data type for column $i (1=INT, 2=BOOLEAN, 3=STRING): "
+		select col_type in "INT" "BOOLEAN" "STRING"; do
+			if [[ -n "$col_type" ]]; then
+				metadata_content+=$(printf "%s:%s:%s" "$col_name" "$col_type" "0")
+				break
+			else
+				echo "Invalid choice. Please select 1, 2, or 3."
+			fi
+		done
+	fi
+	metadata_content+=$'\n'
+done
+
+# Only after successful input, create files
+table_path="mydb/$dbName/$fileName"
+meta_path="mydb/$dbName/.${fileName}.metadata"
+
+touch "$table_path"
+printf "%s" "$metadata_content" >"$meta_path"
+
+echo -e "\nTable '$fileName' is created successfully."
+
+exit 0
