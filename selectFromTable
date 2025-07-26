@@ -91,7 +91,7 @@ done
   colType=${metaTypes[$((idx-1))]}
 
   # numeric if int
-  if [[ "$colType" == "int" ]]; then
+  if [[ "$colType" == "INT" ]]; then
     numericCol=true
   else
     numericCol=false
@@ -160,4 +160,3 @@ done
      fi
 
    done
-
