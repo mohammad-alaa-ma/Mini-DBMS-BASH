@@ -1,22 +1,32 @@
 #!/usr/bin/bash
 
+# ─── ANSI Colors ─────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BLUE='\033[1;34m'
+NC='\033[0m' # No Color
+
+
 dbName=$1
 
 while true
 do
     clear
-    echo "Connected to Database '$dbName'."
-    echo "Available actions:"
-    echo "1. Create Table"
-    echo "2. Delete Table"
-    echo "3. Show Tables"
-    echo "4. Select From Table"
-    echo "5. Delete From Table"
-    echo "6. Insert To Table"
-    echo "7. Update In Table"
-    echo "8. Return To Main Menu"
-    
-    read -p "Choose an action (1-8): " action
+    echo -e "${CYAN}📡 [ Info ] Connected to Database '${dbName}'${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "1) 🧾 Create Table"
+    echo -e "\n2) 🗑️  Delete Table"
+    echo -e "\n3) 📋 Show Tables"
+    echo -e "\n4) 🔍 Select From Table"
+    echo -e "\n5) ❌ Delete From Table"
+    echo -e "\n6) ➕ Insert To Table"
+    echo -e "\n7) ✏️  Update In Table"
+    echo -e "\n8) 🚪 Return To Main Menu"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    read -p $'📘 [ Action ] Choose an option (1-8): ' action
 
     case $action in
         1) 
@@ -41,11 +51,23 @@ do
             ./updateInTable "$dbName" ;;
 
         8) 
-            echo "Disconnecting from Database $dbName... "
+            #echo -e "${CYAN}🔌 [ Info ] Disconnecting from Database '${dbName}'...${NC}"
+            
+            echo
+        msg="🔌 Disconnecting from Database '${dbName}'..."
+            echo -ne "${CYAN}"
+            for ((i=0; i<${#msg}; i++)); do
+              echo -ne "${msg:$i:1}"
+              sleep 0.02
+            done
+              echo -e "${NC}"
+
             break ;;
 	    *) 
-            echo "Invalid choice! Please enter a number from 1 to 8."
-            read -n1 -rp "Press any key to try again..." -s
+            echo -e "\n${YELLOW}⚠️  [ Warning ] Invalid choice! Please enter a number from 1 to 8.${NC}"
+            read -n1 -rp $'\n🔁 [ Info ] Press any key to try again...' -s
             ;;
         esac
 done
+
+
