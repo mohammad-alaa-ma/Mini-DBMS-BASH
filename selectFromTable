@@ -1,38 +1,50 @@
 #!/usr/bin/bash
 
+# ─── ANSI Colors ─────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+
+
 dbName=$1
 dbPath="./mydb/$dbName"
 
 # List tables (excluding metadata)
 tables=($(ls "$dbPath" | grep -v '^\.' | grep -v '\.metadata$'))
 if [[ ${#tables[@]} -eq 0 ]]; then
-  echo "No tables in '$dbName'."
+   echo -e "${RED}[Error] ❌ No tables in '$dbName'.${NC}"
   exit 1
 fi
 
 # Let user select a table (with a "Cancel" option)
 options=( "${tables[@]}" "Cancel" )
 
-echo "Tables in '$dbName':"
-PS3="Enter your choice (1-${#options[@]}): "
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "${CYAN}[Info] 📋 Available Tables in '$dbName'${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+PS3="📌 Enter your choice (1-${#options[@]}): "
 select tableName in "${options[@]}"; do
   case "$tableName" in
     "Cancel")
-      echo "Returning to menu."
+      echo -e "${YELLOW}[Info] 🔙 Returning to Menu...${NC}"
       exit 0
       ;;
     "")
       # Out of range or non‑numeric
-      echo "Invalid selection. Please try again."
+      echo -e "${YELLOW}[Warning] ⚠️  Invalid selection. Please try again.${NC}"
       ;;
     *)
       tablePath="$dbPath/$tableName"
       metaFile="$dbPath/.${tableName}.metadata"
 
       if [[ ! -f "$tablePath" ]]; then
-        echo "Table file '$tableName' not found. Try again."
+         echo -e "${RED}[Error] ❌ Table file '$tableName' not found. Try again.${NC}"
       elif [[ ! -f "$metaFile" ]]; then
-        echo "Metadata for '$tableName' not found. Try again."
+         echo -e "${RED}[Error] ❌ Metadata for '$tableName' not found. Try again.${NC}"
       else
         # valid selection
         break
@@ -48,8 +60,10 @@ metaCols=($(cut -d":" -f1 "$metaFile"))
 
 
 # Show full table
-echo -e "\nSelected table: $tableName"
-echo "Content of Table $tableName:"
+echo -e "\n📂 ${CYAN}[Info] Selected Table: $tableName${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${CYAN}[Info] 📊 Content of Table '$tableName':${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 {
   echo "${metaCols[*]}" | tr ' ' ':'
@@ -59,14 +73,15 @@ echo "Content of Table $tableName:"
 
 # Loop to get valid column name or 0 to go back
 while true; do
-  read -p $'\nEnter column name to filter (or 0 to go back): ' col
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  read -p $'🔎 Enter column name to filter (or 0 to go back): ' col
   if [[ "$col" == "0" ]]; then
-    echo "Returning to menu."
+     echo -e "${YELLOW}[Info] 🔙 Returning to Menu...${NC}"
     exit 0
   fi
 
   if [[ -z "$col" ]]; then
-  echo "No input entered. Please try again."
+  echo -e "${YELLOW}[Warning] ⚠️  No input entered. Please try again.${NC}"
   continue
   fi
 
@@ -79,7 +94,7 @@ while true; do
   done
 
   if [[ $idx -eq -1 ]]; then
-    echo "Column '$col' not found. Try again."
+    echo -e "${RED}[Error] ❌ Column '$col' not found. Try again.${NC}"
   else
     break
   fi
@@ -95,7 +110,7 @@ done
     numericCol=true
   else
     numericCol=false
-    echo "Note: Type of column '$col' is '$colType'; only '=' comparisons are allowed."
+     echo -e "${CYAN}[Info] ℹ️  Note: Type of column '$col' is '$colType'; only '=' comparisons are allowed.${NC}"
   fi
  
 
@@ -103,9 +118,10 @@ done
    while true; do
     # Pick operator 
     if $numericCol; then
-      echo; echo "Choose comparison operator (or Cancel to go back):"
+      echo; echo -e "${BLUE}📐 Choose a comparison operator (or Cancel to go back):${NC}"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
       options=( "=" "!=" ">" "<" ">=" "<=" "Cancel" )
-      PS3="Enter your choice (1-7): "
+      PS3="🔢 Enter your choice (1-7): "
       select choice in "${options[@]}"; do
         case $REPLY in
           1) op="=="   ;;  # equality
@@ -114,8 +130,8 @@ done
           4) op="<"    ;;  # less
           5) op=">="   ;;  # ge
           6) op="<="   ;;  # le
-          7) echo "Returning to menu." ; exit 0 ;;
-          *)   echo "Invalid selection. Try again." ; continue ;;
+          7) echo -e "${YELLOW}[Info] 🔙 Returning to Menu...${NC}" ; exit 0 ;;
+          *)   echo -e "${YELLOW}[Warning] ⚠️  Invalid selection. Please try again.${NC}" ; continue ;;
         esac
         break
       done
@@ -126,12 +142,12 @@ done
 
      # Read the comparison value
      while true; do
-       read -p "Enter value to match in '$col' with (or 0 to go back): " val
+       read -p "✏️  Enter value to match in '$col' with (or 0 to go back): " val
        if [[ -z "$val" ]]; then
-         echo "No input entered. Please try again."
+          echo -e "${YELLOW}[Warning] ⚠️  No input entered. Please try again.${NC}"
          continue
          elif [[ "$val" == "0" ]]; then
-         echo "Returning to menu."
+          echo -e "${YELLOW}[Info] 🔙 Returning to Menu...${NC}"
          exit 0
        fi
        break
@@ -141,22 +157,23 @@ done
     # Check for numeric values in case of numeric column
     if $numericCol ; then 
       if ! [[ "$val" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
-        echo "Error: '$val' is not a valid number. Try again."
+        echo -e "${RED}[Error] ❌ Error: '$val' is not a valid number. Try again.${NC}"
         continue
       fi
     fi
 
      # Filtering
      result=$(awk -F":" -v c="$idx" -v v="$val" "\$c $op v" "$tablePath")
-
+       echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
      if [[ -n "$result" ]]; then
-       echo -e "\nRows where $col $op $val:"
+        echo -e "\n${GREEN}[Success]✅ Rows where $col $op $val:${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
        {
          echo "${metaCols[*]}" | tr ' ' ':'
          echo "$result"
        } | column -t -s ":"
      else
-       echo "No matching records found."
+       echo -e "${YELLOW}[Info] 🔍 No matching records found.${NC}"
      fi
 
    done
