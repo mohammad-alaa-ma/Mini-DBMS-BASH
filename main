@@ -1,50 +1,93 @@
 #!/usr/bin/bash
 
-echo "                |============================| "
-echo "                |Welcome To DBMS Bash Project| "
-echo "                |============================| "
-echo
+# ─── ANSI Colors ─────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+#################################---LOCK---##########################
+
+LOCKDIR="/tmp/mydbms.lockdir"
+
+# Try to create the lock directory
+if ! mkdir "$LOCKDIR" 2>/dev/null; then
+   echo -e "${RED}[Error] ❌ Another instance is already running. Exiting.${NC}"
+  exit 1
+fi
+
+# Ensure we clean up the lock on *any* exit
+trap 'rmdir "$LOCKDIR"' EXIT
+
+echo -e "${GREEN}[Success] ✔ Lock acquired, running DBMS…${NC}"
+
+#########################---PrintScreen---#########################
+    clear
+
+line="       ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+text="             💾 Welcome To DBMS Bash Project 💾"
+
+# Print top border
+echo -e "$line"
+
+# Print animated text WITH color applied before the loop
+echo -ne "${CYAN}"
+for ((i=0; i<${#text}; i++)); do
+  echo -ne "${text:$i:1}"
+  sleep 0.02
+done
+echo -e "${NC}"
+
+# Print bottom border
+echo -e "$line"
+
+
+#####################----Program----###########################
 
 while true 
 do
     clear
-    PS3="Enter your choice (1-5): "
-    echo "Choose an action:"
-    select action in "Create a database" "List all databases" "Connect to a database" "Drop a database" "Exit DBMS"
+    echo -e "       ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "             💾 Welcome To DBMS Bash Project 💾"
+    echo -e "       ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  
+    PS3="📌 Enter your choice (1-5): "
+    select action in "🛠️  Create a database" "📂 List all databases" "🔗 Connect to a database" "🗑️ Drop a database" "🚪 Exit DBMS"
     do
         case "$action" in
-            "Create a database")
+            "🛠️  Create a database")
                 ./createDB
                 break
                 ;;
 
-            "List all databases")
+            "📂 List all databases")
                 ./listAllDB
-                read -r -p "Press any key to continue..." -n1 -s
+                read -r -p "📘 Press any key to continue..." -n1 -s
                 echo
                 break
                 ;;
 
-            "Connect to a database")
+            "🔗 Connect to a database")
                ./connectToDB
                 break
                 ;;
 
-            "Drop a database")
-                read -p "Enter the name of the database to delete: " dbname
+            "🗑️ Drop a database")
+                read -p "🗑️ Enter the name of the database to delete: " dbname
                 ./dropDB "$dbname"
                 break
                 ;;
 
-            "Exit DBMS")
-                echo "Exitting.....!"
+            "🚪 Exit DBMS")
+                echo -e "${YELLOW}[Info] 🔚 Exiting DBMS. Goodbye!${NC}"
                 exit
                 ;;
 
             *)
-                echo "Invalid input. Please choose a number from the menu."
+                echo -e "${YELLOW}[Warning] ⚠️  Invalid input. Please choose a valid option.${NC}"
                 ;;
         esac
     done
 done
-
