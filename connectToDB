@@ -33,7 +33,18 @@ do
         break
     elif [[ -d "mydb/$dbName" ]]; then
         
-	echo -e "\n${GREEN}🔌 [ Success ] Connecting to database '$dbName'...${NC}"
+        
+    # Printing letter by letter    
+	echo
+    msg="🔌 [ Success ] Connecting to database '$dbName'..."
+       echo -ne "${GREEN}"
+       for ((i=0; i<${#msg}; i++)); do
+         echo -ne "${msg:$i:1}"
+         sleep 0.02
+       done
+         echo -e "${NC}"
+
+
         sleep 1
 	./databaseActions "$dbName"
 
