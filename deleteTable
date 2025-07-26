@@ -1,43 +1,56 @@
 #!/usr/bin/bash
 
+# ─── ANSI Colors ─────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BLUE='\033[1;34m'
+NC='\033[0m' # No Color
+
+
 # Check if database name argument is provided
 if [ $# -lt 1 ]; then
-	echo "invalid input: database name required as argument."
+        echo -e "${RED}❌ [ Error ] Invalid input: database name required as argument.${NC}"
 	exit 1
 fi
 
 dbName=$1
 tables=$(ls -f ./mydb/$dbName | grep -v '^\.')
 if [[ -z "$tables" ]]; then
-	echo "No tables found in database '$dbName'."
-	read -r -p "Press any key to try again..." -n1 -s
+	echo -e "${YELLOW}⚠️  [ Warning ] No tables found in database '$dbName'.${NC}"
+	read -r -p $'\n🔁 [ Info ] Press any key to try again...' -n1 -s
 	exit 1
 fi
 
 
 # Loop until user enters a non-empty table name
 while true; do
-	echo "Available tables in database '$dbName':"
+        clear
+	echo -e "${CYAN}\n📋 [ Info ] Available tables in database '$dbName':${NC}"
+	echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 	for table in $tables; do
-		echo "- $table"
+		echo -e "${BLUE}➤ $table${NC}"
 	done
-	read -p "Enter the table's name to delete (or type '0' to go back): " tableName
+	echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+	
+	read -p $'\n📘 [ Info ] Enter the table name to delete (or type 0 to go back): ' tableName
 
 	if [[ $tableName == "0" ]]; then
 		exit 1
 	fi
 
 	if [[ -z "$tableName" ]]; then
-		echo "You must enter a file name!"
-		read -r -p "Press any key to try again..." -n1 -s
+		echo -e "\n${YELLOW}⚠️  [ Warning ] You must enter a table name!${NC}"
+		read -r -p $'\n🔁 [ Info ] Press any key to try again...' -n1 -s
 		echo
 		continue
 	fi
 
 	# Check if table file exists
 	if [ ! -f "./mydb/$dbName/$tableName" ]; then
-		echo "Table '$tableName' doesn't exist in database '$dbName'."
-		read -r -p "Press any key to try again..." -n1 -s
+		echo -e "\n${RED}❌ [ Error ] Table '$tableName' doesn't exist in database '$dbName'.${NC}"
+		read -r -p $'\n🔁 [ Info ] Press any key to try again...' -n1 -s
 		echo
 		continue
 	fi
@@ -48,5 +61,21 @@ done
 # Delete table file and metadata (if exists)
 rm "./mydb/$dbName/$tableName" "./mydb/$dbName/.$tableName.metadata" 2>/dev/null
 
-echo "File '$tableName' in Database '$dbName' is removed successfully."
-read -r -p "Press any key to try again..." -n1 -s 
+echo -e "${CYAN}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+# Delete animated
+
+success_msg="Deleting Table '$tableName' now ....."
+
+for ((i=0; i<${#success_msg}; i++)); do
+    echo -ne "${success_msg:$i:1}"
+    sleep 0.03
+done
+echo
+echo -e "${GREEN}🗑️  [ Success ] Table '$tableName' in database '$dbName' was removed successfully.${NC}"
+
+
+read -r -p $'\n🔁 [ Info ] Press any key to go to Menu...' -n1 -s
+
+
+
