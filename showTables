@@ -17,9 +17,15 @@ if [[ ! -d "$dir" ]]; then
     exit 1
 fi
 
+tables=$(ls "$dir" | grep -v '^\.')
+if [[ -z "$tables" ]]; then
+    echo -e "${YELLOW}⚠️  [ Warning ] No tables found in database '$dbName'.${NC}"
+    read -n1 -rp $'\n🔙 [ Info ] Press any key to return to the previous menu...' -s
+    exit 1
+fi
+
 echo -e "${CYAN}\n📋 [ Info ] Showing tables in database '$dbName'...${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-tables=$(ls "$dir")
 for table in $tables; do
     echo -e "${BLUE}➤ $table${NC}"
 done
