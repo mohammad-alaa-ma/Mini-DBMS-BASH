@@ -47,23 +47,24 @@ done
 read -p $'\n📘 [ Info ] Enter number of columns: ' col_count
 
 # Validate it's a number
-if ! [[ "$col_count" =~ ^[1-9][0-9]*$ ]]; then
-	echo -e "${RED}❌ [ Error ] Invalid number of columns.${NC}"
+if ! [[ "$col_count" =~ ^([1-9]|[1-9][0-9]|100)$ ]]; then
+	echo -e "\n${RED}❌ [ Error ] Invalid number of columns.${NC}"
+	read -r -p $'\n🔁 [ Info ] Press any key to go to Table Menu ...' -n1 -s
 	exit 1
 fi
 
 # Prepare to collect names and metadata
 metadata_content=""
 col_names=()
+pk_count=0
 
+
+# Column name input with validation & uniqueness
 for ((i = 1; i <= col_count; i++)); do
-	# Column name input with validation & uniqueness
+	
 	while true; do
-		if ((i == 1)); then
 			echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-			echo -e "${BLUE}🔑 [ Info ] Column 1 is the Primary Key and can be of type (int/str)${NC}"
-		fi
-		read -p "Enter column $i name (2–12 letters): " col_name
+     		read -p "Enter column $i name (2–12 letters): " col_name
 
 		# 1) Format check: letters only, 2–12 chars
 		if [[ ! "$col_name" =~ ^[A-Za-z]{2,12}$ ]]; then
@@ -89,39 +90,54 @@ for ((i = 1; i <= col_count; i++)); do
 		break
 	done
 
-	# Build metadata line
-	if ((i == 1)); then
-		# Ask type only int or str, default PK
-		PS3="Enter data type for column 1 (1=INT, 2=STRING): "
-		select col_type in "INT" "STRING"; do
-			if [[ -n "$col_type" ]]; then
-				metadata_content+=$(printf "%s:%s:%s" "$col_name" "$col_type" "1")
-				break
-			else
-				echo -e "${RED}❌ [ Error ] Invalid choice. Please select 1 or 2.${NC}"
-			fi
-		done
-	else
-		# Other columns: ask full int, str, bool, default no PK
+	
+	# Ask for int, str, bool
 		PS3="Enter the data type for column $i (1=INT, 2=BOOLEAN, 3=STRING): "
 		select col_type in "INT" "BOOLEAN" "STRING"; do
 			if [[ -n "$col_type" ]]; then
-				metadata_content+=$(printf "%s:%s:%s" "$col_name" "$col_type" "0")
+				
 				break
 			else
 				echo -e "${RED}❌ [ Error ] Invalid choice. Please select 1, 2, or 3.${NC}"
 			fi
 		done
+	
+
+# Asking for primary key only if INT or STRING and no PK yet
+	if (( pk_count == 0 )) && ([[ "$col_type" == "INT" || "$col_type" == "STRING" ]]); then
+		while true; do
+			read -p $'\n📘 [ Info ] Make this column the PRIMARY KEY? (y/n): ' ispk
+			case $ispk in
+				[Yy]* ) pk_flag=1; pk_count=$((pk_count+1)); break ;; 
+				[Nn]* ) pk_flag=0; break ;; 
+				* ) echo -e "${YELLOW}⚠️  [ Warning ] Please answer y or n.${NC}" ;; 
+			esac
+		done
+	else
+		pk_flag=0
 	fi
-	metadata_content+=$'\n'
+
+	# Add to metadata
+	metadata_content+="$col_name:$col_type:$pk_flag\n"
 done
+
+# Check for one PK
+if (( pk_count != 1 )); then
+    echo -e "${RED}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+	echo -e "\n${RED}❌ [ Error ] You must make one PRIMARY KEY. Creation aborted.${NC}"
+	read -r -p $'\n🔁 [ Info ] Press any key to go to table menu ...' -n1 -s
+	exit 1
+fi
+
+
 
 # Only after successful input, create files
 table_path="mydb/$dbName/$fileName"
 meta_path="mydb/$dbName/.${fileName}.metadata"
 
 touch "$table_path"
-printf "%s" "$metadata_content" >"$meta_path"
+echo -e "$metadata_content" > "$meta_path"
+
 
 echo -e "${CYAN}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}✅ [ Success ] Table '$fileName' created successfully in '$dbName'.${NC}"
