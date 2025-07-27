@@ -1,0 +1,63 @@
+#! /usr/bin/bash
+dbName=$(ls ./mydb | head -n 1)
+
+while true; do
+clear
+
+read -rp "$dbName>> " query
+
+    command=$(echo "$query" | cut -d' ' -f1)
+    rest=$(echo "$query" | sed "s/$command//")
+    rest=${rest##[[:space:]]}
+    rest=${rest%%[[:space:]]}
+
+case $command in
+    USE)
+        newdbName=$(echo "$query" | cut -d' ' -f2)
+        if [[ -z "$newdbName" ]]; then
+            echo "Database name is required"
+        elif [[ ! -d "./mydb/$newdbName" ]]; then
+            echo "Database '$newdbName' does not exist."
+        else
+            dbName=$newdbName
+        fi
+        ;;
+    CREATE)
+    #CREATE TABLE/DATABASE
+        case $rest in
+            TABLE\ *)
+                if [[ -z "$dbName" ]]; then
+                    echo "You must select a database first using USE command."
+                fi
+                tableName=$(echo "$rest" | cut -d' ' -f2)
+                if [[ -z "$tableName" ]]; then
+                    echo "Table name is required"
+                fi
+                ;;
+            DATABASE\ *)
+                newDB=$(echo "$rest" | cut -d' ' -f2)
+                ./createDB "$newDB"
+                ;;
+            *)
+                echo "Invalid CREATE command: $rest"
+                ;;
+        esac
+        ;;
+    INSERT)
+        echo "Inserting values..."
+        ;;
+    SELECT)
+        echo "Selecting data..."
+        ;;
+    UPDATE)
+        echo "Updating data..."
+        ;;
+    DELETE)
+        echo "Deleting data..."
+        ;;
+    *)
+        echo "Unknown command: $command"
+        ;;
+esac
+    read -r -p "Press any key to continue..." -n1 -s
+done
