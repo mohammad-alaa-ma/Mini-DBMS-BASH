@@ -10,10 +10,15 @@ NC='\033[0m' # No Color
 dbName=$1
 
 tables=$(ls ./mydb/$dbName)
-echo -e "${BLUE}📘 Choose a table to insert into:${NC}"
+echo -e "${BLUE}📘 Choose a table to insert into (or type 0 to go back):${NC}"
 PS3="> "
 select tableName in $tables
 do
+    if [[ "$REPLY" == "0" ]]; then
+        clear
+        echo -e "${YELLOW}⚠️  Going back...${NC}"
+        exit 1
+    fi
     if [[ -n "$tableName" ]]; then
         clear
         echo -e "${BLUE}━━━━━━━━━━━━[ 📘 Inserting into table: $tableName ]━━━━━━━━━━━━${NC}"
@@ -39,6 +44,9 @@ declare -i index=0
 record=''
 while read -r line; do
     index+=1
+    if [[ -z "$line" ]]; then
+        continue  # skip empty lines
+    fi
     columnName=$(echo "$line" | cut -d: -f1)
     columnType=$(echo "$line" | cut -d: -f2)
     isPK=$(echo "$line" | cut -d: -f3)
