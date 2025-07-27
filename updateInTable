@@ -1,5 +1,12 @@
 #!/usr/bin/bash
 
+# ━━━━━━━━━━━━[ 🎨 Color Definitions ]━━━━━━━━━━━━
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;36m'
+NC='\033[0m' # No Color
+
 dbName=$1
 
 availableTables=$(ls "./mydb/$dbName")
@@ -7,30 +14,35 @@ availableTables=$(ls "./mydb/$dbName")
 while true
 do
     clear
-    PS3='enter the number of the table or 0 to go back: '
+    echo -e "${BLUE}━━━━━━━━━━━━[ 📘 Available Tables in $dbName ]━━━━━━━━━━━━${NC}"
+    echo -e "${BLUE}📘 enter the number of the table or 0 to go back:${NC}"
+    PS3="> "
     select table in $availableTables
     do
         if [[ "$REPLY" == "0" ]]; then
+            echo -e "${YELLOW}⚠️  Returning to previous menu...${NC}"
             exit 0
         fi
         if [[ -z "$table" ]]; then
-            echo "You must select a table!"
-            read -n1 -rp "Press any key to continue..." -s
+            echo -e "${YELLOW}⚠️  You must select a valid table!${NC}"
+            read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s
             echo
             continue
         fi
-        read -rp "Enter column name to update: " columnName
-        read -rp "Enter value to compare to: (or leave clear to update all)" compareValue
-        read -rp 'Enter the operator (=, !=, <, >): (or leave clear to update all)' operator
-        read -rp "Enter newValue: " newValue
+        echo -e "${BLUE}📘 Selected table: $table${NC}"
+        echo -e "${BLUE}━━━━━━━━━━━━[ ✏️  Update Record ]━━━━━━━━━━━━${NC}"
+        read -rp "$(echo -e "${BLUE}📘 Enter column name to update: ${NC}")" columnName
+        read -rp "$(echo -e "${BLUE}📘 Enter value to compare to (or leave empty to update all): ${NC}")" compareValue
+        read -rp "$(echo -e "${BLUE}📘 Enter the operator (=, !=, <, >) (or leave empty to update all): ${NC}")" operator
+        read -rp "$(echo -e "${BLUE}📘 Enter new value: ${NC}")" newValue
         if [[ -z "$columnName" || -z "$newValue" ]]; then
-            echo "you must provide the column name and the new value"
-            read -n1 -rp "Press any key to continue..." -s
+            echo -e "${RED}❌ You must provide both the column name and the new value.${NC}"
+            read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s
             echo
             continue
         fi
         ./UpdateRecord "$dbName" "$table" "$columnName" "$compareValue" "$operator" "$newValue"
-        read -n1 -rp "Press any key to continue..." -s
+        read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s
         echo
         break;
     done
