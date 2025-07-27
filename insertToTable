@@ -1,37 +1,28 @@
 #! /usr/bin/bash
 
-# ━━━━━━━━━━━━[ 🎨 Color Definitions ]━━━━━━━━━━━━
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;36m'
-NC='\033[0m' # No Color
-
 dbName=$1
 
 tables=$(ls ./mydb/$dbName)
-echo -e "${BLUE}📘 Choose a table to insert into:${NC}"
-PS3="> "
+PS3="Choose a table to insert into: "
 select tableName in $tables
 do
-    if [[ -n "$tableName" ]]; then
-        clear
-        echo -e "${BLUE}━━━━━━━━━━━━[ 📘 Inserting into table: $tableName ]━━━━━━━━━━━━${NC}"
-        break
-    else
-        echo -e "${YELLOW}⚠️  Invalid input${NC}"
-        read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s < /dev/tty
-    fi
+        if [[ -n "$tableName" ]]; then
+            clear
+            echo "inserting into table: $tableName"
+            break
+        else
+            echo "Invalid input"
+            read -n1 -rp "Press any key to continue..." -s < /dev/tty
+        fi
 done
-
 
 metadataFile="./mydb/$dbName/.$tableName.metadata"
 dataFile="./mydb/$dbName/$tableName"
 
 if [[ ! -f "$metadataFile" || ! -f "$dataFile" ]]; then
     echo "$metadataFile or $dataFile does not exist!" >> logs
-    echo -e "${RED}❌ Internal error: see logs for more details${NC}"
-    read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s
+    echo "internal error: see logs for more details"
+    read -n1 -rp "Press any key to continue..." -s
     exit 1
 fi
 
@@ -43,20 +34,20 @@ while read -r line; do
     columnType=$(echo "$line" | cut -d: -f2)
     isPK=$(echo "$line" | cut -d: -f3)
     if [[ $isPK == "1" ]]; then
-        echo -e "${BLUE}📘 Primary key column detected: $columnName${NC}"
+        echo "Primary key column detected: $columnName"
     fi
-    read -p "$(echo -e "${BLUE}📘 enter value for $columnName of type $columnType:${NC} ")" value < /dev/tty
+    read -p "enter value for $columnName of type $columnType: " value < /dev/tty
     inputValidatorResult=$(./inputValidator "$columnType" "$value")
     if [[ "$inputValidatorResult" != "0" ]]; then
-        echo -e "${RED}❌ Invalid value for column $columnName of type $columnType.${NC}"
-        read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s < /dev/tty
+        echo "Invalid value for column $columnName of type $columnType."
+        read -n1 -rp "Press any key to continue..." -s < /dev/tty
         exit 1
     fi
     if [[ "$isPK" == "1" ]]; then
         pkCheckResult=$(./pkCheck "$dbName" "$tableName" "$index" "$value")
         if [[ $? -eq 0 ]]; then
-            echo -e "${RED}❌ Primary key value $value already exists in the table.${NC}"
-            read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s < /dev/tty
+            echo "Primary key value $value already exists in the table."
+            read -n1 -rp "Press any key to continue..." -s < /dev/tty
             exit 1
         fi
     fi

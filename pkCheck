@@ -6,5 +6,5 @@ pkValue=$4
 
 table="./mydb/$dbName/$tableName"
 data=$(cat $table | cut -d: -f$index)
-#echo all defined variables
+
 exit $(echo $data | grep -q "$pkValue")  # Check if the primary key value exists
