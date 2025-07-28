@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;36m'
 NC='\033[0m' # No Color
 
-# ━━━━━━━━━━━━[ parsing input ]━━━━━━━━━━━━
+# ━━━━━━━━━━━━[ Parsing input ]━━━━━━━━━━━━
 dbname=$1
 table=$2
 compareCol=$3
@@ -15,95 +15,125 @@ Value=$4
 operator=$5
 editCol=$6
 newValue=$7
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-editColumnIndex=$(./getColumnIndex "$dbname" "$table" "$editCol")
-if [[ -z "$editColumnIndex" || $? -ne 0 ]]; then
-  echo -e "${RED}❌ Column '$editCol' not found in table '$table'.${NC}"
-  exit 1
-fi
-
-if [[ -z "$newValue" ]]; then
-  echo -e "${YELLOW}⚠️  new value is missing.${NC}"
-  exit 1
-fi
-##
-if [[ -z "$Value" || -z "$operator" || -z "$compareCol" ]]; then
-  #update all rows in the table
-  Value='@'
-  operator='!='
-fi
-## check for > , < with only INTs
-columnType=$(./getType "$dbname" "$table" "$compareCol")
-if [[ "$operator" == ">" || "$operator" == "<" ]] && [[ "$columnType" != "INT" ]]; then
-  echo -e "${RED}❌ Invalid operator '$operator' for column type '$columnType'. Only INT columns can use > or < operators.${NC}"
-  exit 1
-fi
 
 tablePath="./mydb/$dbname/$table"
 metaPath="./mydb/$dbname/.$table.metadata"
 
-# check if the column to be updated is a primary key
-isPK=0
-if grep -q "^$editCol:.*:1$" "$metaPath"; then
-    isPK=1    
-    ./pkCheck "$dbname" "$table" "$editColumnIndex" "$newValue"
-    if [ $? -eq 0 ]; then
-        echo -e "${RED}❌ Primary key value '$newValue' already exists. Update aborted.${NC}"
-        exit 1  
+# ━━━━━━━━━━━━[ Functions ]━━━━━━━━━━━━
+
+init() {
+    editColumnIndex=$(./getColumnIndex "$dbname" "$table" "$editCol")
+    if [[ -z "$editColumnIndex" || $? -ne 0 ]]; then
+        echo -e "${RED}❌ Column '$editCol' not found in table '$table'.${NC}"
+        exit 1
     fi
-fi
 
-matchedRows=$(./getRows "$dbname" "$table" "$compareCol" "$Value" "$operator")
+    if [[ -z "$newValue" ]]; then
+        echo -e "${YELLOW}⚠️  New value is missing.${NC}"
+        exit 1
+    fi
 
-if [[ $? -ne 0 ]]; then
-  echo -e "${RED}❌ Error retrieving rows. Please check the inputs.${NC}"
-  exit 1
-fi
+    primaryKeyCheck
+    validateInput
 
-if [[ "$matchedRows" == "-1" || -z "$matchedRows" ]]; then
-  echo -e "${YELLOW}⚠️  No matching rows found.${NC}"
-  exit 1
-fi
-
-#reverse order the matched rows to update the last row first
-# this is to avoid issues with line numbers changing after each update
-matchedRows=$(echo "$matchedRows" | tr ' ' '\n' | sort -r | tr '\n' ' ')
-
-#check if the entered value is valid for this column
-columnType=$(grep "^$editCol:" "$metaPath" | cut -d: -f2)
-inputValidatorResult=$(./inputValidator "$columnType" "$newValue")
-if [[ "$inputValidatorResult" != "0" ]]; then
-    echo -e "${RED}❌ Invalid value for column $editCol of type $columnType.${NC}"
-    exit 1
-fi
-
-declare -i rowsAffected=0
-
-numberOfColumns=$(wc -l < $metaPath)
-
-for row in $matchedRows; do
-
-    line=$(sed -n "${row}p" "$tablePath")
-    newline=''
-    for i in $(seq 1 $numberOfColumns); do
-    if [ $i -eq "$editColumnIndex" ]; then
-        newline+="$newValue:"
+    if [[ -z "$Value" || -z "$operator" || -z "$compareCol" ]]; then
+        matchedRows=$(seq 1 "$(wc -l < "$tablePath")")
     else
-        newline+=$(echo "$line" | cut -d':' -f"$i"):
+        matchedRows=$(./getRows "$dbname" "$table" "$compareCol" "$Value" "$operator")
     fi
+
+    if [[ "$matchedRows" == "-1" || -z "$matchedRows" ]]; then
+        echo -e "${YELLOW}⚠️  No matching rows found.${NC}"
+        exit 1
+    fi
+
+    updateRows "$matchedRows" "$tablePath" "$metaPath" "$editColumnIndex" "$newValue" "$ispk"
+}
+
+updateRows() {
+    local matchedRows=$1
+    local tablePath=$2
+    local metaPath=$3
+    local editColumnIndex=$4
+    local newValue=$5
+    local isPK=$6
+    local numberOfColumns
+    numberOfColumns=$(wc -l < "$metaPath")
+    declare -i rowsAffected=0
+
+    for row in $matchedRows; do
+        line=$(sed -n "${row}p" "$tablePath")
+        newline=''
+
+        for i in $(seq 1 "$numberOfColumns"); do
+            if [ "$i" -eq "$editColumnIndex" ]; then
+                newline+="$newValue:"
+            else
+                newline+=$(echo "$line" | cut -d':' -f"$i"):
+            fi
+        done
+
+        newline=${newline%:}
+        sed -i "${row}s/.*/$newline/" "$tablePath"
+        rowsAffected+=1
+
+        if [[ "$isPK" -eq 1 ]]; then
+            break
+        fi
     done
-    # remove the trailing colon
-    newline=${newline%:}
-    # finally, replace the old line with the new one in the table file
-    sed -i "${row}s/.*/$newline/" "$tablePath"
-    rowsAffected+=1
-    
-    if [[ $isPK -eq 1 ]]; then
-        #end after updating the row since it is a primary key
-        break
+
+    echo -e "${GREEN}✅ $rowsAffected row(s) affected.${NC}"
+}
+
+primaryKeyCheck() {
+    isPK=0
+    if grep -q "^$editCol:.*:1$" "$metaPath"; then
+        isPK=1
+        ./pkCheck "$dbname" "$table" "$editColumnIndex" "$newValue"
+        if [ $? -eq 0 ]; then
+            echo -e "${RED}❌ Primary key value '$newValue' already exists. Update aborted.${NC}"
+            exit 1
+        fi
     fi
+}
 
-done
+validateInput() {
+  validateComparison
+  validateNewValue
+}
 
-echo -e "${GREEN}✅ $rowsAffected row(s) affected.${NC}"
+validateComparison(){
+  local columnType=$(./getType "$dbname" "$table" "$compareCol")
+  if [[ -z "$columnType" ]]; then
+      echo -e "${RED}❌ Column '$compareCol' not found in table '$table'.${NC}"
+      exit 1
+  fi
+  inputValidatorResult=$(./inputValidator "$columnType" "$Value")
+
+  if [[ "$inputValidatorResult" != "0" ]]; then
+      echo -e "${RED}❌ Invalid value for column $editCol of type $columnType.${NC}"
+      exit 1
+  fi
+
+  if [[ "$operator" == ">" || "$operator" == "<" ]] && [[ "$columnType" != "INT" ]]; then
+      echo -e "${RED}❌ Invalid operator '$operator' for column type '$columnType'. Only INT columns can use > or < operators.${NC}"
+      exit 1
+  fi
+
+}
+validateNewValue(){
+  local columnType=$(./getType "$dbname" "$table" "$editCol")
+  if [[ -z "$columnType" ]]; then
+      echo -e "${RED}❌ Column '$compareCol' not found in table '$table'.${NC}"
+      exit 1
+  fi
+  inputValidatorResult=$(./inputValidator "$columnType" "$newValue")
+
+  if [[ "$inputValidatorResult" != "0" ]]; then
+      echo -e "${RED}❌ Invalid value for column $editCol of type $columnType.${NC}"
+      exit 1
+  fi
+}
+
+# ━━━━━━━━━━━━[ Script Entry Point ]━━━━━━━━━━━━
+init
