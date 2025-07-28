@@ -16,7 +16,7 @@ dbName=$1
 while true; do
 	clear
 	echo -e "${CYAN}📁 [ Info ] Connected to database: '$dbName'${NC}"
-	read -p $'\n📘 [ Info ] Enter file name to create (or type 0 to go back): ' fileName
+	read -p $'\n📘 [ Info ] Enter table name to create (or type 0 to go back): ' fileName
 	
 	# 0 To go back
 	if [[ $fileName == "0" ]]; then
@@ -117,8 +117,16 @@ for ((i = 1; i <= col_count; i++)); do
 		pk_flag=0
 	fi
 
-	# Add to metadata
-	metadata_content+="$col_name:$col_type:$pk_flag\n"
+	# Add to metadata (and line after each except the last one)
+    if (( i == col_count )); then
+        metadata_content+="$col_name:$col_type:$pk_flag"
+    else
+        metadata_content+="$col_name:$col_type:$pk_flag\n"
+    fi
+
+
+
+	#metadata_content+="$col_name:$col_type:$pk_flag\n"
 done
 
 # Check for one PK
