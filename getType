@@ -1,0 +1,11 @@
+#! /usr/bin/bash
+
+dbname=$1
+table=$2
+columnName=$3
+
+metaDir="./mydb/$dbname/.$table.metadata"
+
+ColumnType=$(grep "^$columnName:" "$metaDir" | cut -d':' -f2)
+
+echo $ColumnType

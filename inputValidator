@@ -58,7 +58,7 @@ case $1 in
         fi
         ;;
     BOOLEAN)
-        if [[ $2 =~ ^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|0|1)$ ]]
+        if [[ $2 == 'true' || $2 == 'false' ]]
         then
             echo 0
         else

@@ -16,19 +16,26 @@ Value=$4
 operator=$5
 newValue=$6
 columnIndex=$(./getColumnIndex "$dbname" "$table" "$columnName")
-if [[ -z "$columnName" || -z "$newValue" ]]; then
-  echo -e "${YELLOW}⚠️  Usage: $0 <dbname> <table> <columnName> <Value> <operator> <newValue>${NC}"
-  exit 1
-fi
 if [[ -z "$columnIndex" || $? -ne 0 ]]; then
   echo -e "${RED}❌ Column '$columnName' not found in table '$table'.${NC}"
   exit 1
 fi
 
+if [[ -z "$newValue" ]]; then
+  echo -e "${YELLOW}⚠️  new value is missing.${NC}"
+  exit 1
+fi
+##
 if [[ -z "$Value" || -z "$operator" ]]; then
   #update all rows in the table
   Value='@'
   operator='!='
+fi
+## check for > , < with only INTs
+columnType=$(./getType "$dbname" "$table" "$columnName")
+if [[ "$operator" == ">" || "$operator" == "<" ]] && [[ "$columnType" != "INT" ]]; then
+  echo -e "${RED}❌ Invalid operator '$operator' for column type '$columnType'. Only INT columns can use > or < operators.${NC}"
+  exit 1
 fi
 
 tablePath="./mydb/$dbname/$table"
