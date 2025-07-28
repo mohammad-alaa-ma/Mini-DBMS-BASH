@@ -31,17 +31,18 @@ do
         fi
         echo -e "${BLUE}📘 Selected table: $table${NC}"
         echo -e "${BLUE}━━━━━━━━━━━━[ ✏️  Update Record ]━━━━━━━━━━━━${NC}"
-        read -rp "$(echo -e "${BLUE}📘 Enter column name to update: ${NC}")" columnName
-        read -rp "$(echo -e "${BLUE}📘 Enter value to compare to (or leave empty to update all): ${NC}")" compareValue
+        read -rp "$(echo -e "${BLUE}📘 Enter column name to compare (or leave empty to update all): ${NC}")" compareCol
         read -rp "$(echo -e "${BLUE}📘 Enter the operator (=, !=, <, >) (or leave empty to update all): ${NC}")" operator
+        read -rp "$(echo -e "${BLUE}📘 Enter value to compare to (or leave empty to update all): ${NC}")" compareValue
+        read -rp "$(echo -e "${BLUE}📘 Enter column name to be updated: ${NC}")" editCol
         read -rp "$(echo -e "${BLUE}📘 Enter new value: ${NC}")" newValue
-        if [[ -z "$columnName" || -z "$newValue" ]]; then
+        if [[ -z "$editCol" || -z "$newValue" ]]; then
             echo -e "${RED}❌ You must provide both the column name and the new value.${NC}"
             read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s
             echo
             continue
         fi
-        ./UpdateRecord "$dbName" "$table" "$columnName" "$compareValue" "$operator" "$newValue"
+        ./UpdateRecord "$dbName" "$table" "$compareCol" "$compareValue" "$operator" "$editCol" "$newValue"
         read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s
         echo
         break;
