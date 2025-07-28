@@ -106,7 +106,10 @@ for ((i = 1; i <= col_count; i++)); do
 # Asking for primary key only if INT or STRING and no PK yet
 	if (( pk_count == 0 )) && ([[ "$col_type" == "INT" || "$col_type" == "STRING" ]]); then
 		while true; do
-			read -p $'\n📘 [ Info ] Make this column the PRIMARY KEY? (y/n): ' ispk
+			
+		    echo -ne "\n📘 [ Info ] Make this column the PRIMARY KEY? (y/n): "
+		    read -n1 ispk
+		    echo
 			case $ispk in
 				[Yy]* ) pk_flag=1; pk_count=$((pk_count+1)); break ;; 
 				[Nn]* ) pk_flag=0; break ;; 
