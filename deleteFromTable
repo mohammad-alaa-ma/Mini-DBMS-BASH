@@ -56,6 +56,8 @@ done
 
 # Load column names into array
 metaCols=($(cut -d":" -f1 "$metaFile"))
+metaTypes=($(cut -d":" -f2 "$metaFile"))
+
 
 while true; do
 
@@ -90,7 +92,7 @@ while true; do
 
     if [[ "$confirm" == "SURE" ]]; then
        > "$tablePath"
-       > "$metaFile"
+       # > "$metaFile"
        read -r -p "All rows deleted from table '$tableName'."  -n1 -s
        exit 0
     else
@@ -121,42 +123,87 @@ while true; do
   if (( idx == -1 )); then
     echo -e "${RED}[Error] ❌ Column '$col' not found. Try again.${NC}"
   else
+    colType=${metaTypes[$((idx-1))]}
     break
   fi
  done
 
-  # Value and deletion loop
+ # Numeric vs string/boolean handling
+  if [[ "$colType" == "INT" ]]; then
+    numericCol=true
+  else
+    numericCol=false
+    echo -e "${CYAN}[Info] ℹ️  Note: Type of column '$col' is '$colType'; only '=' comparisons allowed.${NC}"
+  fi
+
+# Choose operator
+  if $numericCol; then
+    echo; echo -e "${BLUE}📐 Choose a comparison operator (or Cancel to exit):${NC}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    ops=( "=" "!=" ">" "<" ">=" "<=" "Cancel" )
+    PS3="🔢 Enter your choice (1-${#ops[@]}): "
+    select choice in "${ops[@]}"; do
+      case $REPLY in
+        1) op="=="   ;;  
+        2) op="!="   ;;  
+        3) op=">"    ;;  
+        4) op="<"    ;;  
+        5) op=">="   ;;  
+        6) op="<="   ;;  
+        7) echo -e "${YELLOW}[Info] 🔙 Exiting...${NC}"; exit 0 ;;
+        *) echo -e "${YELLOW}[Warning] ⚠️  Invalid selection. Try again.${NC}"; continue ;;
+      esac
+      break
+    done
+  else
+    op="=="
+  fi
+
+
+ # Read comparison value
   while true; do
-
-    read -p "Enter value to delete in '$col' (or 0 to exit): " val
-    if [[ "$val" == "0" ]]; then
-     echo -e "${YELLOW}[Info] 🔙 Exiting.${NC}"
-     exit 0
+    read -p "✏️  Enter value for '$col' (or 0 to exit): " val
+    if [[ -z "$val" ]]; then
+      echo -e "${YELLOW}[Warning] ⚠️  No input entered. Try again.${NC}"
+      continue
+    elif [[ "$val" == "0" ]]; then
+      echo -e "${YELLOW}[Info] 🔙 Exiting...${NC}"
+      exit 0
     fi
+    if $numericCol && ! [[ "$val" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+      echo -e "${RED}[Error] ❌ '$val' is not a valid number. Try again.${NC}"
+      continue
+    fi
+    break
+  done
 
-
-    # awk to select only matching rows
+  # awk to select only matching rows
     result=$(awk -v c="$idx" -v v="$val" '
     BEGIN {
       FS = ":"
     }
-    # For each line where field c equals v, print the line
-    { if ($c == v) 
+    # For each line where field c compared to v, print the line
+    { 
+      if ($c '"$op"' v) 
       print
     }' "$tablePath")
 
     if [[ -z "$result" ]]; then
-      echo -e "${YELLOW}[Info] 🔍 No matching records found.${NC}"
-      else
-      # build new table without those rows
+    echo -e "${YELLOW}[Info] 🔍 No matching records found.${NC}"
+    read -r -p "Press any key to try again..." -n1 -s
+    continue
+    fi
+
+    # build new table without those rows
       newTable=$(awk -v c="$idx" -v v="$val" '
-      BEGIN {
-        FS=OFS=":"
-        } 
-        { if ($c!=v)
-            print 
-        }' "$tablePath")
-      
+      BEGIN { FS=OFS = ":" }
+      {
+        if (! ($c '"$op"' v) )
+          print
+      }
+      ' "$tablePath")
+
+
       # overwrite the table
       echo "$newTable" > "$tablePath"
       echo -e "${GREEN}[Success]✅ Deleted rows where $col = '$val'.${NC}"
@@ -175,9 +222,7 @@ while true; do
      } | column -t -s ":"
      read -r -p "Press any key to try again..." -n1 -s
      break
-     #exit 0  
-   fi
- done
+    
 
   clear
 
