@@ -13,7 +13,7 @@ mydbs=$(./GetAllDbs)
 if [[ $? -eq 1 ]]
 then 
     echo -e "${RED}❌ [ Error ] There are no databases found.${NC}"
-    exit 0
+    exit 1
 fi
 
 echo -e "${CYAN}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

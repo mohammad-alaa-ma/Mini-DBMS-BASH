@@ -9,7 +9,13 @@ NC='\033[0m' # No Color
 
 dbName=$1
 
-tables=$(ls ./mydb/$dbName)
+tables=$(ls ./mydb/$dbName 2> /dev/null)
+if [[ -z "$tables" || $? -ne 0 ]]; then
+    echo -e "${RED}❌ No tables found in the database $dbName.${NC}"
+    read -n1 -rp "$(echo -e "${YELLOW}⚠️  Press any key to continue...${NC}")" -s
+    echo
+    exit 1
+fi
 echo -e "${BLUE}📘 Choose a table to insert into (or type 0 to go back):${NC}"
 PS3="> "
 select tableName in $tables
