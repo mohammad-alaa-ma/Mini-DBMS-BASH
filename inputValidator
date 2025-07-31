@@ -1,4 +1,5 @@
 #! /usr/bin/bash
+shopt -s extglob
 
 # 1 -> digits only
 # 2 -> characters only
@@ -49,12 +50,20 @@ case $1 in
             echo 1
         fi
         ;;
-    MIX | STRING)
+    MIX)
         if [[ $2 =~ ^[0-9A-Za-z]+$ ]]
         then
             echo 0
         else
             echo 1
+        fi
+        ;;
+    STRING)
+        if [[ $2 =~ [:] || ! $2 =~ ^[[:print:]]+$ ]]
+        then
+            echo 1
+        else
+            echo 0
         fi
         ;;
     BOOLEAN)
