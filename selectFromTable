@@ -16,7 +16,8 @@ dbPath="./mydb/$dbName"
 # List tables (excluding metadata)
 tables=($(ls "$dbPath" | grep -v '^\.' | grep -v '\.metadata$'))
 if [[ ${#tables[@]} -eq 0 ]]; then
-   echo -e "${RED}[Error] ❌ No tables in '$dbName'.${NC}"
+   echo -e "\n${RED}[Error] ❌ No tables in '$dbName'.${NC}"
+   read -n1 -r -p $'\n🔙 Press any key to return to the table menu...' key
   exit 1
 fi
 
