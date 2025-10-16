@@ -2,6 +2,8 @@
 
 A lightweight Database Management System implemented entirely in Bash scripting. This project provides a command-line interface for creating databases, managing tables, and performing CRUD operations using simple file-based storage.
 
+https://github.com/user-attachments/assets/94e2d6ca-995e-4803-b26f-2c43e9d104f7
+
 ## 🚀 Features
 
 ### Database Management
