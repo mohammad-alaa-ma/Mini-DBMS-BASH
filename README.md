@@ -4,6 +4,43 @@ A lightweight Database Management System implemented entirely in Bash scripting.
 
 https://github.com/user-attachments/assets/94e2d6ca-995e-4803-b26f-2c43e9d104f7
 
+## Table of Contents
+
+- [🚀 Features](#-features)
+  - [Database Management](#database-management)
+  - [Table Management](#table-management)
+  - [Data Operations](#data-operations)
+  - [Data Types & Constraints](#data-types--constraints)
+- [🏗️ Architecture](#️-architecture)
+  - [Storage Structure](#storage-structure)
+  - [File Format](#file-format)
+- [📋 Prerequisites](#-prerequisites)
+- [🛠️ Installation & Setup](#️-installation--setup)
+- [📖 Usage Guide](#-usage-guide)
+  - [Starting the DBMS](#starting-the-dbms)
+  - [Database Operations](#database-operations)
+    - [Create a Database](#create-a-database)
+    - [Connect to Database](#connect-to-database)
+  - [Table Operations](#table-operations)
+    - [Create a Table](#create-a-table)
+    - [Insert Data](#insert-data)
+    - [Query Data](#query-data)
+    - [Update Records](#update-records)
+    - [Delete Records](#delete-records)
+- [🔧 Technical Details](#-technical-details)
+  - [Lock Mechanism](#lock-mechanism)
+  - [Validation Rules](#validation-rules)
+  - [Error Handling](#error-handling)
+- [🎨 User Interface](#-user-interface)
+  - [Color Coding](#color-coding)
+  - [Interactive Menus](#interactive-menus)
+- [🔒 Limitations](#-limitations)
+- [🤝 Contributing](#-contributing)
+  - [Development Guidelines](#development-guidelines)
+- [📄 License](#-license)
+- [🙏 Acknowledgments](#-acknowledgments)
+
+
 ## 🚀 Features
 
 ### Database Management
